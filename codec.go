@@ -74,7 +74,7 @@ func (dst Bitmap) Clone(into Bitmap) Bitmap {
 
 	into.balance(dst)
 	copy(into, dst)
-	return into
+	return into[:len(dst)]
 }
 
 // Clear clears the bitmap and resizes it to zero.
