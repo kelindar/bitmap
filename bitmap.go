@@ -1,7 +1,9 @@
+// Copyright (c) Roman Atachiants and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 package bitmap
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -107,25 +109,6 @@ func (dst *Bitmap) balance(src Bitmap) {
 	if len(*dst) < len(src) {
 		dst.grow(len(src) - 1)
 	}
-}
-
-// FromBinary reads a bitmap from a byte buffer without copying the buffer.
-func FromBinary(buffer []byte) (out Bitmap) {
-	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&out))
-	hdr.Len = len(buffer) >> 6
-	hdr.Cap = hdr.Len
-	hdr.Data = uintptr(unsafe.Pointer(&(buffer)[0]))
-	return out
-}
-
-// ToBinary converts the bitmap to binary representation without copying the underlying
-// data. The output buffer should not be modified, since it would also change the bitmap.
-func (dst *Bitmap) ToBinary() (out []byte) {
-	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&out))
-	hdr.Len = len(*dst) * 8
-	hdr.Cap = hdr.Len
-	hdr.Data = uintptr(unsafe.Pointer(&(*dst)[0]))
-	return out
 }
 
 //go:linkname memclrNoHeapPointers runtime.memclrNoHeapPointers

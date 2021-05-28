@@ -1,3 +1,6 @@
+// Copyright (c) Roman Atachiants and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 package bitmap
 
 import (
@@ -73,15 +76,56 @@ func TestClear(t *testing.T) {
 }
 
 func TestAnd(t *testing.T) {
-	index := Bitmap{}
-	for i := uint32(100); i < 200; i++ {
-		index.Set(i)
-		assert.True(t, index.Contains(i))
+	a, b := Bitmap{}, Bitmap{}
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i)
 	}
 
-	index.Clear()
-	for i := uint32(100); i < 200; i++ {
-		assert.False(t, index.Contains(i))
+	a.And(b)
+	assert.False(t, a.Contains(1))
+	for i := uint32(0); i < 100; i += 2 {
+		assert.True(t, a.Contains(i))
+	}
+}
+
+func TestAndNot(t *testing.T) {
+	a, b := Bitmap{}, Bitmap{}
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+		b.Set(i)
+	}
+
+	a.AndNot(b)
+	assert.False(t, a.Contains(1))
+	for i := uint32(0); i < 100; i += 2 {
+		assert.False(t, a.Contains(i))
+	}
+}
+
+func TestOr(t *testing.T) {
+	a, b := Bitmap{}, Bitmap{}
+	for i := uint32(0); i < 100; i += 2 {
+		b.Set(i)
+	}
+
+	a.Or(b)
+	assert.False(t, a.Contains(1))
+	for i := uint32(0); i < 100; i += 2 {
+		assert.True(t, a.Contains(i))
+	}
+}
+
+func TestXor(t *testing.T) {
+	a, b := Bitmap{}, Bitmap{}
+	for i := uint32(0); i < 100; i += 2 {
+		b.Set(i)
+	}
+
+	a.Xor(b)
+	assert.False(t, a.Contains(1))
+	for i := uint32(0); i < 100; i += 2 {
+		assert.True(t, a.Contains(i))
 	}
 }
 
