@@ -65,6 +65,17 @@ func (dst *Bitmap) WriteTo(w io.Writer) (int64, error) {
 	return int64(n1 + n2), err
 }
 
+// Clone clones the bitmap. If a destination bitmap is provided, the bitmap will be
+// cloned inside, otherwise a new Bitmap will be allocated and returned
+func (dst Bitmap) Clone(into Bitmap) Bitmap {
+	if into == nil {
+		into = make(Bitmap, len(dst))
+	}
+
+	copy(into, dst)
+	return into
+}
+
 // Clear clears the bitmap and resizes it to zero.
 func (dst *Bitmap) Clear() {
 	if size := len(*dst); size > 0 {

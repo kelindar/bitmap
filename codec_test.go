@@ -18,7 +18,8 @@ func TestSaveLoad(t *testing.T) {
 
 	// Save the map
 	enc := new(bytes.Buffer)
-	n, err := m.WriteTo(enc)
+	cloned := m.Clone(nil)
+	n, err := cloned.WriteTo(enc)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(636), n)
 

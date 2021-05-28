@@ -3,6 +3,20 @@
 
 package bitmap
 
+import "math/bits"
+
+// Minimum get the smallest value stored in this roaring bitmap, assumes that it is not empty
+
+// FirstZero finds the first zero bit and returns its index, assuming the map is not empty.
+func (dst Bitmap) FirstZero() (uint32, bool) {
+	for blkAt, blk := range dst {
+		if blk != 0xffffffffffffffff {
+			return uint32(blkAt<<6 + bits.LeadingZeros64(blk)), true
+		}
+	}
+	return 0, false
+}
+
 // Range iterates over the bitmap elements. If the callback returns false it halts
 // the iteration.
 func (dst Bitmap) Range(f func(x uint32) bool) {

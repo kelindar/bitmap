@@ -16,7 +16,9 @@ import (
 // BenchmarkBitmap/andnot-8      	29372960	        49.75 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/or-8          	23535918	        50.01 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/xor-8         	23752498	        50.69 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/range-8         	  964482	      1245 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clear-8       	203721861	         5.910 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/ones-8        	41331565	        29.70 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clone-8       	 8291484	       137.6 ns/op	     896 B/op	       1 allocs/op
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
 	other.Set(5000)
@@ -49,11 +51,18 @@ func BenchmarkBitmap(b *testing.B) {
 		index.AndNot(other)
 	})
 
-	run(b, "range", func(index Bitmap) {
-		index.Range(func(x uint32) bool {
-			return true
-		})
+	run(b, "clear", func(index Bitmap) {
+		index.Clear()
 	})
+
+	run(b, "ones", func(index Bitmap) {
+		index.Ones()
+	})
+
+	run(b, "clone", func(index Bitmap) {
+		index.Clone(nil)
+	})
+
 }
 
 func TestSetRemove(t *testing.T) {
@@ -163,6 +172,10 @@ func TestXor(t *testing.T) {
 func run(b *testing.B, name string, f func(index Bitmap)) {
 	b.Run(name, func(b *testing.B) {
 		index := make(Bitmap, 100)
+		for i := 0; i < len(index); i++ {
+			index[i] = 0xffffffffffffffff
+		}
+
 		b.ReportAllocs()
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {

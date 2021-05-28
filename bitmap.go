@@ -84,6 +84,13 @@ func (dst *Bitmap) Xor(b Bitmap) {
 	}
 }
 
+// Ones sets the entire bitmap to one
+func (dst Bitmap) Ones() {
+	for i := 0; i < len(dst); i++ {
+		dst[i] = 0xffffffffffffffff
+	}
+}
+
 // grow gros whe size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
 	for i := len(*dst); i <= blkAt; i++ {
