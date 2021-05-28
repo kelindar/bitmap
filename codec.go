@@ -72,6 +72,7 @@ func (dst Bitmap) Clone(into Bitmap) Bitmap {
 		into = make(Bitmap, len(dst))
 	}
 
+	into.balance(dst)
 	copy(into, dst)
 	return into
 }

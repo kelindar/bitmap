@@ -18,7 +18,7 @@ func TestSaveLoad(t *testing.T) {
 
 	// Save the map
 	enc := new(bytes.Buffer)
-	cloned := m.Clone(nil)
+	cloned := m.Clone(Bitmap{})
 	n, err := cloned.WriteTo(enc)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(636), n)
