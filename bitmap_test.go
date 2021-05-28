@@ -9,16 +9,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// BenchmarkBitmap/set-8         	600116121	         1.987 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/remove-8      	828642868	         1.534 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/contains-8    	910330890	         1.305 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/and-8         	29602585	        38.39 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/andnot-8      	29372960	        49.75 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/or-8          	23535918	        50.01 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/xor-8         	23752498	        50.69 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clear-8       	203721861	         5.910 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/ones-8        	41331565	        29.70 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clone-8       	 8291484	       137.6 ns/op	     896 B/op	       1 allocs/op
+// BenchmarkBitmap/set-8         	606936064	         1.984 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/remove-8      	763688641	         1.559 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/contains-8    	915751614	         1.299 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/and-8         	31582188	        38.38 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/andnot-8      	23472387	        50.65 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/or-8          	23695324	        50.98 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/xor-8         	23197326	        51.23 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clear-8       	205686652	         5.897 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/ones-8        	40554514	        29.33 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clone-8       	 7676722	       143.9 ns/op	     896 B/op	       1 allocs/op
+// BenchmarkBitmap/first-zero-8  	30062228	        40.39 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/min-8         	381730626	         3.131 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/max-8         	684005834	         1.756 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
 	other.Set(5000)
@@ -63,6 +66,17 @@ func BenchmarkBitmap(b *testing.B) {
 		index.Clone(nil)
 	})
 
+	run(b, "first-zero", func(index Bitmap) {
+		index.FirstZero()
+	})
+
+	run(b, "min", func(index Bitmap) {
+		index.Min()
+	})
+
+	run(b, "max", func(index Bitmap) {
+		index.Max()
+	})
 }
 
 func TestSetRemove(t *testing.T) {
@@ -168,18 +182,61 @@ func TestXor(t *testing.T) {
 	}
 }
 
-// run runs a benchmark
-func run(b *testing.B, name string, f func(index Bitmap)) {
-	b.Run(name, func(b *testing.B) {
-		index := make(Bitmap, 100)
-		for i := 0; i < len(index); i++ {
-			index[i] = 0xffffffffffffffff
-		}
+func TestMin(t *testing.T) {
+	{
+		a := Bitmap{0x0, 0x0, 0xffffffffffffff00}
+		v, ok := a.Min()
+		assert.True(t, ok)
+		assert.Equal(t, 64+64+8, int(v))
+		assert.False(t, a.Contains(v-1))
+		assert.True(t, a.Contains(v))
+	}
 
-		b.ReportAllocs()
-		b.ResetTimer()
-		for n := 0; n < b.N; n++ {
-			f(index)
-		}
-	})
+	{
+		a := Bitmap{0x0, 0x0}
+		v, ok := a.Min()
+		assert.False(t, ok)
+		assert.Equal(t, 0, int(v))
+	}
+}
+
+func TestMax(t *testing.T) {
+	{
+		a := Bitmap{0x0, 0x0, 0x00000000000000f0}
+		v, ok := a.Max()
+		assert.True(t, ok)
+		assert.Equal(t, 64+64+7, int(v))
+
+		assert.False(t, a.Contains(v-4))
+		assert.True(t, a.Contains(v-3))
+		assert.True(t, a.Contains(v-2))
+		assert.True(t, a.Contains(v-1))
+		assert.True(t, a.Contains(v))
+		assert.False(t, a.Contains(v+1))
+		assert.False(t, a.Contains(v+2))
+	}
+
+	{
+		a := Bitmap{0x0, 0x0}
+		v, ok := a.Max()
+		assert.False(t, ok)
+		assert.Equal(t, 0, int(v))
+	}
+}
+
+func TestFirstZero(t *testing.T) {
+	{
+		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffff0f}
+		v, ok := a.FirstZero()
+		assert.True(t, ok)
+		assert.Equal(t, 64+64+4, int(v))
+		assert.False(t, a.Contains(v))
+	}
+
+	{
+		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff}
+		v, ok := a.FirstZero()
+		assert.False(t, ok)
+		assert.Equal(t, 0, int(v))
+	}
 }

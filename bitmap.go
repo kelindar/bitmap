@@ -3,6 +3,8 @@
 
 package bitmap
 
+import "math/bits"
+
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
 
@@ -26,14 +28,14 @@ func (dst *Bitmap) Remove(x uint32) {
 }
 
 // Contains checks whether a value is contained in the bitmap or not.
-func (dst *Bitmap) Contains(x uint32) bool {
+func (dst Bitmap) Contains(x uint32) bool {
 	blkAt := int(x >> 6)
-	if size := len(*dst); blkAt >= size {
+	if size := len(dst); blkAt >= size {
 		return false
 	}
 
 	bitAt := int(x % 64)
-	return ((*dst)[blkAt] & (1 << bitAt)) > 0
+	return (dst[blkAt] & (1 << bitAt)) > 0
 }
 
 // And computes the intersection between two bitmaps and stores the result in the current bitmap
@@ -89,6 +91,38 @@ func (dst Bitmap) Ones() {
 	for i := 0; i < len(dst); i++ {
 		dst[i] = 0xffffffffffffffff
 	}
+}
+
+// Min get the smallest value stored in this bitmap, assuming the bitmap is not empty.
+func (dst Bitmap) Min() (uint32, bool) {
+	for blkAt, blk := range dst {
+		if blk != 0x0 {
+			return uint32(blkAt<<6 + bits.TrailingZeros64(blk)), true
+		}
+	}
+
+	return 0, false
+}
+
+// Max get the largest value stored in this bitmap, assuming the bitmap is not empty.
+func (dst Bitmap) Max() (uint32, bool) {
+	var blk uint64
+	for blkAt := len(dst) - 1; blkAt >= 0; blkAt-- {
+		if blk = dst[blkAt]; blk != 0x0 {
+			return uint32(blkAt<<6 + (63 - bits.LeadingZeros64(blk))), true
+		}
+	}
+	return 0, false
+}
+
+// FirstZero finds the first zero bit and returns its index, assuming the bitmap is not empty.
+func (dst Bitmap) FirstZero() (uint32, bool) {
+	for blkAt, blk := range dst {
+		if blk != 0xffffffffffffffff {
+			return uint32(blkAt<<6 + bits.TrailingZeros64(^blk)), true
+		}
+	}
+	return 0, false
 }
 
 // grow gros whe size of the bitmap until we reach the desired block offset

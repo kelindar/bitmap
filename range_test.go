@@ -15,25 +15,6 @@ func BenchmarkRange(b *testing.B) {
 		})
 	})
 
-	run(b, "first-zero", func(index Bitmap) {
-		index.FirstZero()
-	})
-}
-
-func TestFirstZero(t *testing.T) {
-	{
-		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff, 0x00ffffffffffffff}
-		v, ok := a.FirstZero()
-		assert.True(t, ok)
-		assert.Equal(t, 64+64+8, int(v))
-	}
-
-	{
-		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff}
-		v, ok := a.FirstZero()
-		assert.False(t, ok)
-		assert.Equal(t, 0, int(v))
-	}
 }
 
 func TestRange(t *testing.T) {
@@ -69,4 +50,20 @@ func TestRangeCases(t *testing.T) {
 		assert.Equal(t, i, count)
 	}
 
+}
+
+// run runs a benchmark
+func run(b *testing.B, name string, f func(index Bitmap)) {
+	b.Run(name, func(b *testing.B) {
+		index := make(Bitmap, 100)
+		for i := 0; i < len(index); i++ {
+			index[i] = 0xffffffffffffffff
+		}
+
+		b.ReportAllocs()
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			f(index)
+		}
+	})
 }
