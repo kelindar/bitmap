@@ -6,13 +6,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// BenchmarkRange/range-8         	   80383	     14849 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkRange/range-8         	   80398	     14697 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkRange/filter-8        	  124311	      9587 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkRange(b *testing.B) {
 	run(b, "range", func(index Bitmap) {
 		index.Range(func(x uint32) bool {
 			return true
 		})
 	})
+
+	run(b, "filter", func(index Bitmap) {
+		index.Filter(func(x uint32) bool {
+			return x%2 == 0
+		})
+	})
+}
+
+func TestFilter(t *testing.T) {
+	a := make(Bitmap, 4)
+	a.Ones()
+	assert.Equal(t, 256, a.Count())
+
+	// Filter out odd
+	a.Filter(func(x uint32) bool {
+		return x%2 == 0
+	})
+	assert.Equal(t, 128, a.Count())
+
+	// Filter out even
+	a.Filter(func(x uint32) bool {
+		return x%2 == 1
+	})
+	assert.Equal(t, 0, a.Count())
 }
 
 func TestRange(t *testing.T) {
@@ -48,7 +73,18 @@ func TestRangeCases(t *testing.T) {
 		})
 		assert.Equal(t, i, count)
 	}
+}
 
+func TestRangeIndex(t *testing.T) {
+	a := make(Bitmap, 2)
+	a.Ones()
+
+	triangular := 0
+	a.Range(func(x uint32) bool {
+		triangular += int(x)
+		return true
+	})
+	assert.Equal(t, 8128, triangular)
 }
 
 // run runs a benchmark
