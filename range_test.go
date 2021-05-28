@@ -7,14 +7,12 @@ import (
 )
 
 // BenchmarkRange/range-8         	   80383	     14849 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkRange/first-zero-8    	22536818	        51.76 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkRange(b *testing.B) {
 	run(b, "range", func(index Bitmap) {
 		index.Range(func(x uint32) bool {
 			return true
 		})
 	})
-
 }
 
 func TestRange(t *testing.T) {
@@ -29,6 +27,7 @@ func TestRange(t *testing.T) {
 		return true
 	})
 	assert.Equal(t, 50, count)
+	assert.Equal(t, 50, a.Count())
 }
 
 func TestRangeCases(t *testing.T) {

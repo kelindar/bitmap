@@ -22,6 +22,7 @@ import (
 // BenchmarkBitmap/first-zero-8  	30062228	        40.39 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/min-8         	381730626	         3.131 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/max-8         	684005834	         1.756 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkRange/count-8         	34223232	        35.20 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
 	other.Set(5000)
@@ -76,6 +77,10 @@ func BenchmarkBitmap(b *testing.B) {
 
 	run(b, "max", func(index Bitmap) {
 		index.Max()
+	})
+
+	run(b, "count", func(index Bitmap) {
+		index.Count()
 	})
 }
 
