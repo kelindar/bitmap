@@ -16,6 +16,7 @@ import (
 // BenchmarkBitmap/andnot-8      	29372960	        49.75 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/or-8          	23535918	        50.01 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/xor-8         	23752498	        50.69 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/range-8         	  964482	      1245 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
 	other.Set(5000)
@@ -47,6 +48,12 @@ func BenchmarkBitmap(b *testing.B) {
 	run(b, "xor", func(index Bitmap) {
 		index.AndNot(other)
 	})
+
+	run(b, "range", func(index Bitmap) {
+		index.Range(func(x uint32) bool {
+			return true
+		})
+	})
 }
 
 func TestSetRemove(t *testing.T) {
@@ -72,6 +79,29 @@ func TestClear(t *testing.T) {
 	index.Clear()
 	for i := uint32(100); i < 200; i++ {
 		assert.False(t, index.Contains(i))
+	}
+}
+
+func TestTruthTables(t *testing.T) {
+	{ // AND
+		a := Bitmap{0b0011}
+		a.And(Bitmap{0b0101})
+		assert.Equal(t, 0b0001, int(a[0]))
+	}
+	{ // AND NOT
+		a := Bitmap{0b0011}
+		a.AndNot(Bitmap{0b0101})
+		assert.Equal(t, 0b0010, int(a[0]))
+	}
+	{ // OR
+		a := Bitmap{0b0011}
+		a.Or(Bitmap{0b0101})
+		assert.Equal(t, 0b0111, int(a[0]))
+	}
+	{ // XOR
+		a := Bitmap{0b0011}
+		a.Xor(Bitmap{0b0101})
+		assert.Equal(t, 0b0110, int(a[0]))
 	}
 }
 

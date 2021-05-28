@@ -3,10 +3,6 @@
 
 package bitmap
 
-import (
-	"unsafe"
-)
-
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
 
@@ -88,15 +84,6 @@ func (dst *Bitmap) Xor(b Bitmap) {
 	}
 }
 
-// Clear clears the bitmap and resizes it to zero.
-func (dst *Bitmap) Clear() {
-	if size := len(*dst); size > 0 {
-		ptr := unsafe.Pointer(&(*dst)[0])
-		memclrNoHeapPointers(ptr, uintptr(size))
-		*dst = (*dst)[:0]
-	}
-}
-
 // grow gros whe size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
 	for i := len(*dst); i <= blkAt; i++ {
@@ -110,6 +97,3 @@ func (dst *Bitmap) balance(src Bitmap) {
 		dst.grow(len(src) - 1)
 	}
 }
-
-//go:linkname memclrNoHeapPointers runtime.memclrNoHeapPointers
-func memclrNoHeapPointers(p unsafe.Pointer, n uintptr)
