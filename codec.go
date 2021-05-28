@@ -72,7 +72,10 @@ func (dst Bitmap) Clone(into Bitmap) Bitmap {
 		into = make(Bitmap, len(dst))
 	}
 
-	into.balance(dst)
+	if into.balance(dst); len(into) < len(dst) {
+		return nil // Elliminate bounds check
+	}
+
 	copy(into, dst)
 	return into[:len(dst)]
 }
