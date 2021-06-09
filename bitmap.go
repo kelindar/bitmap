@@ -3,7 +3,11 @@
 
 package bitmap
 
-import "math/bits"
+import (
+	"math/bits"
+
+	"github.com/kelindar/bitmap/simd"
+)
 
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
@@ -45,8 +49,13 @@ func (dst *Bitmap) And(b Bitmap) {
 	}
 
 	a := *dst
-	for i := 0; i < len(a); i++ {
-		a[i] = a[i] & b[i]
+	if simd.Supported {
+		simd.And(a, b)
+	} else {
+		a := *dst
+		for i := 0; i < len(a); i++ {
+			a[i] = a[i] & b[i]
+		}
 	}
 }
 
@@ -57,8 +66,12 @@ func (dst *Bitmap) AndNot(b Bitmap) {
 	}
 
 	a := *dst
-	for i := 0; i < len(a); i++ {
-		a[i] = a[i] &^ b[i]
+	if simd.Supported {
+		simd.AndNot(a, b)
+	} else {
+		for i := 0; i < len(a); i++ {
+			a[i] = a[i] &^ b[i]
+		}
 	}
 }
 
@@ -69,8 +82,12 @@ func (dst *Bitmap) Or(b Bitmap) {
 	}
 
 	a := *dst
-	for i := 0; i < len(a); i++ {
-		a[i] = a[i] | b[i]
+	if simd.Supported {
+		simd.Or(a, b)
+	} else {
+		for i := 0; i < len(a); i++ {
+			a[i] = a[i] | b[i]
+		}
 	}
 }
 
@@ -81,8 +98,12 @@ func (dst *Bitmap) Xor(b Bitmap) {
 	}
 
 	a := *dst
-	for i := 0; i < len(a); i++ {
-		a[i] = a[i] ^ b[i]
+	if simd.Supported {
+		simd.Xor(a, b)
+	} else {
+		for i := 0; i < len(a); i++ {
+			a[i] = a[i] ^ b[i]
+		}
 	}
 }
 

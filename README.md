@@ -1,4 +1,4 @@
-# Zero-Allocation Bitmap Index (Bitset) in Go
+# Zero-Allocation, SIMD Bitmap Index (Bitset) in Go
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/kelindar/bitmap)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/kelindar/bitmap)](https://pkg.go.dev/github.com/kelindar/bitmap)
@@ -12,8 +12,9 @@ I've used this package to build a columnar in-memory datastore, so if you want t
 
 ## Features
 
- * Zero-allocation (see benchmarks below) on almost all of the important APIs.
- * 1-2 nanosecond on single-bit operations (set/remove/contains).
+ * **Zero-allocation** (see benchmarks below) on almost all of the important APIs.
+ * **1-2 nanosecond** on single-bit operations (set/remove/contains).
+ * **SIMD enhanced** `and`, `and not`, `or` and `xor` operations, specifically using `AVX2` (256-bit).
  * Support for `and`, `and not`, `or` and `xor` which allows you to compute intersect, difference, union and symmetric difference between 2 bitmaps.
  * Support for `min`, `max`, `count`, and `first-zero` which is very useful for building free-lists using a bitmap index.
  * Reusable and can be pooled, providing `clone` with a destination and `clear` operations.
@@ -87,18 +88,22 @@ Benchmarks below were run on a large pre-allocated bitmap (slice of 100 pages, 6
 
 ```
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8          607986201    2.004 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/remove-8       759495112    1.564 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/contains-8     916055708    1.306 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/and-8          30769704     39.00 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/andnot-8       23518297     51.11 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/or-8           24000480     50.92 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/xor-8          23529734     51.24 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/clear-8        206332054    5.845 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/ones-8         39965895	    29.47 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/first-zero-8   30001574	    40.15 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/min-8          375470745    3.295 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/max-8          681821280    1.740 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/count-8        32433483     35.64 ns/op    0 B/op    0 allocs/op
-BenchmarkBitmap/clone-8        100000000    11.77 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/set-8         	608127316     1.979 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/remove-8      	775627708     1.562 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/contains-8    	907577592     1.299 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/clear-8       	231583378     5.163 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/ones-8        	39476930      29.77 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/first-zero-8  	23612611      50.82 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/min-8         	415250632     2.916 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/max-8         	683142546     1.763 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/count-8       	33334074      34.88 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/clone-8       	100000000     11.46 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/simd-and-8    	74337927      15.47 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/simd-andnot-8 	80220294      14.92 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/simd-or-8     	81321524      14.81 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/simd-xor-8    	80181888      14.81 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/and-8         	29650201      41.68 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/andnot-8      	26496499      51.72 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/or-8          	20629934      50.83 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/xor-8         	23786632      51.46 ns/op     0 B/op    0 allocs/op
 ```

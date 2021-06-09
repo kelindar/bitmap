@@ -6,23 +6,28 @@ package bitmap
 import (
 	"testing"
 
+	"github.com/kelindar/bitmap/simd"
 	"github.com/stretchr/testify/assert"
 )
 
-// BenchmarkBitmap/set-8         	607986201	         2.004 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/remove-8      	759495112	         1.564 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/contains-8    	916055708	         1.306 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/and-8         	30769704	        39.00 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/andnot-8      	23518297	        51.11 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/or-8          	24000480	        50.92 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/xor-8         	23529734	        51.24 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clear-8       	206332054	         5.845 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/ones-8        	39965895	        29.47 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/first-zero-8  	30001574	        40.15 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/min-8         	375470745	         3.295 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/max-8         	681821280	         1.740 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/count-8       	32433483	        35.64 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clone-8       	100000000	        11.77 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/set-8         	608127316	         1.979 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/remove-8      	775627708	         1.562 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/contains-8    	907577592	         1.299 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clear-8       	231583378	         5.163 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/ones-8        	39476930	        29.77 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/first-zero-8  	23612611	        50.82 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/min-8         	415250632	         2.916 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/max-8         	683142546	         1.763 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/count-8       	33334074	        34.88 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clone-8       	100000000	        11.46 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-and-8    	74337927	        15.47 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-andnot-8 	80220294	        14.92 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-or-8     	81321524	        14.81 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-xor-8    	80181888	        14.81 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/and-8         	29650201	        41.68 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/andnot-8      	26496499	        51.72 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/or-8          	20629934	        50.83 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/xor-8         	23786632	        51.46 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
 	other.Set(5000)
@@ -37,22 +42,6 @@ func BenchmarkBitmap(b *testing.B) {
 
 	run(b, "contains", func(index Bitmap) {
 		index.Contains(5000)
-	})
-
-	run(b, "and", func(index Bitmap) {
-		index.And(other)
-	})
-
-	run(b, "andnot", func(index Bitmap) {
-		index.AndNot(other)
-	})
-
-	run(b, "or", func(index Bitmap) {
-		index.AndNot(other)
-	})
-
-	run(b, "xor", func(index Bitmap) {
-		index.AndNot(other)
 	})
 
 	run(b, "clear", func(index Bitmap) {
@@ -82,6 +71,42 @@ func BenchmarkBitmap(b *testing.B) {
 	var into Bitmap
 	run(b, "clone", func(index Bitmap) {
 		index.Clone(&into)
+	})
+
+	// With AVX (should be default)
+	simd.Supported = true
+	run(b, "simd-and", func(index Bitmap) {
+		index.And(other)
+	})
+
+	run(b, "simd-andnot", func(index Bitmap) {
+		index.AndNot(other)
+	})
+
+	run(b, "simd-or", func(index Bitmap) {
+		index.AndNot(other)
+	})
+
+	run(b, "simd-xor", func(index Bitmap) {
+		index.AndNot(other)
+	})
+
+	// Disable AVX
+	simd.Supported = false
+	run(b, "and", func(index Bitmap) {
+		index.And(other)
+	})
+
+	run(b, "andnot", func(index Bitmap) {
+		index.AndNot(other)
+	})
+
+	run(b, "or", func(index Bitmap) {
+		index.AndNot(other)
+	})
+
+	run(b, "xor", func(index Bitmap) {
+		index.AndNot(other)
 	})
 
 }
@@ -114,25 +139,38 @@ func TestClear(t *testing.T) {
 
 func TestTruthTables(t *testing.T) {
 	{ // AND
-		a := Bitmap{0b0011}
-		a.And(Bitmap{0b0101})
+		a := Bitmap{0b0011, 0b1011, 0b1100, 0b0000, 0b0011, 0b1011, 0b1100, 0b0000, 0b0011}
+		a.And(Bitmap{0b0101, 0b1101, 0b1010, 0b1111, 0b0101, 0b1101, 0b1010, 0b1111, 0b0101})
 		assert.Equal(t, 0b0001, int(a[0]))
+		assert.Equal(t, 0b1001, int(a[1]))
+		assert.Equal(t, 0b1000, int(a[2]))
+		assert.Equal(t, 0b0000, int(a[3]))
+		assert.Equal(t, 0b0001, int(a[4]))
+		assert.Equal(t, 0b1001, int(a[5]))
+		assert.Equal(t, 0b1000, int(a[6]))
+		assert.Equal(t, 0b0000, int(a[7]))
+		assert.Equal(t, 0b0001, int(a[8]))
 	}
 	{ // AND NOT
-		a := Bitmap{0b0011}
-		a.AndNot(Bitmap{0b0101})
+		a := Bitmap{0b0011, 0, 0, 0}
+		a.AndNot(Bitmap{0b0101, 0, 0, 0})
 		assert.Equal(t, 0b0010, int(a[0]))
 	}
 	{ // OR
-		a := Bitmap{0b0011}
-		a.Or(Bitmap{0b0101})
+		a := Bitmap{0b0011, 0, 0, 0}
+		a.Or(Bitmap{0b0101, 0, 0, 0})
 		assert.Equal(t, 0b0111, int(a[0]))
 	}
 	{ // XOR
-		a := Bitmap{0b0011}
-		a.Xor(Bitmap{0b0101})
+		a := Bitmap{0b0011, 0, 0, 0}
+		a.Xor(Bitmap{0b0101, 0, 0, 0})
 		assert.Equal(t, 0b0110, int(a[0]))
 	}
+}
+
+func TestTruthTables_NoSIMD(t *testing.T) {
+	simd.Supported = false
+	TestTruthTables(t)
 }
 
 func TestAnd(t *testing.T) {
