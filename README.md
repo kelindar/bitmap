@@ -4,6 +4,7 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/kelindar/bitmap)](https://pkg.go.dev/github.com/kelindar/bitmap)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kelindar/bitmap)](https://goreportcard.com/report/github.com/kelindar/bitmap)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Coverage Status](https://coveralls.io/repos/github/kelindar/bitmap/badge.svg)](https://coveralls.io/github/kelindar/bitmap)
 
 This package contaisn a bitmap index which is backed by `uint64` slice, easily encodable to/from a `[]byte` without copying memory around so it can be present
 in both disk and memory. As opposed to something as [roaring bitmaps](github.com/RoaringBitmap/roaring), this is a simple impementation designed to be used for small to medium dense collections.

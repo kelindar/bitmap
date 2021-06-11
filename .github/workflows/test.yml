@@ -1,0 +1,34 @@
+name: Test
+on: [push]
+env:
+  PROJECT: "github.com/kelindar/bitmap"
+  GO111MODULE: "on"
+
+jobs:
+  test:
+    name: Tests and Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - name: Get dependencies
+        run: |
+          go install golang.org/x/tools/cmd/cover
+          go install github.com/mattn/goveralls
+          go install github.com/go-playground/overalls
+          go get -v -t -d ./...
+
+      - name: Run tests and calculate code coverage
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          export PROJ=$(go env GOPATH)/src/$PROJECT
+          mkdir -p $PROJ && shopt -s dotglob && mv ./* $PROJ && cd $PROJ
+          overalls -project=$PROJECT -covermode=atomic -- -race
+          goveralls -coverprofile=overalls.coverprofile -service=github-actions -race -covermode=atomic -repotoken=${{ secrets.COVERALLS_TOKEN }}
