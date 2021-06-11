@@ -1,10 +1,15 @@
-# Zero-Allocation, SIMD Bitmap Index (Bitset) in Go
+<p align="center">
+<img width="330" height="110" src=".github/logo.png" border="0" alt="kelindar/bitmap">
+<br>
+<img src="https://img.shields.io/github/go-mod/go-version/kelindar/bitmap" alt="Go Version">
+<a href="https://pkg.go.dev/github.com/kelindar/bitmap"><img src="https://pkg.go.dev/badge/github.com/kelindar/bitmap" alt="PkgGoDev"></a>
+<a href="https://goreportcard.com/report/github.com/kelindar/bitmap"><img src="https://goreportcard.com/badge/github.com/kelindar/bitmap" alt="Go Report Card"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+<a href="https://coveralls.io/github/kelindar/bitmap"><img src="https://coveralls.io/repos/github/kelindar/bitmap/badge.svg" alt="Coverage"></a>
+</p>
 
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/kelindar/bitmap)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/kelindar/bitmap)](https://pkg.go.dev/github.com/kelindar/bitmap)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kelindar/bitmap)](https://goreportcard.com/report/github.com/kelindar/bitmap)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Coverage Status](https://coveralls.io/repos/github/kelindar/bitmap/badge.svg)](https://coveralls.io/github/kelindar/bitmap)
+
+# Zero-Allocation, SIMD Bitmap Index (Bitset) in Go
 
 This package contaisn a bitmap index which is backed by `uint64` slice, easily encodable to/from a `[]byte` without copying memory around so it can be present
 in both disk and memory. As opposed to something as [roaring bitmaps](github.com/RoaringBitmap/roaring), this is a simple impementation designed to be used for small to medium dense collections.
