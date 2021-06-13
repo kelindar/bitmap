@@ -315,3 +315,26 @@ func TestCount(t *testing.T) {
 	assert.Equal(t, 5, b.CountTo(102))
 	assert.Equal(t, 8, b.CountTo(math.MaxUint32))
 }
+
+func TestGrow(t *testing.T) {
+	bitmap := make(Bitmap, 1, 5)
+	bitmap[0] = 42
+
+	assert.Equal(t, 1, len(bitmap))
+	assert.Equal(t, 5, cap(bitmap))
+	assert.Equal(t, Bitmap{42}, bitmap)
+
+	bitmap.grow(0)
+	assert.Equal(t, 1, len(bitmap))
+	assert.Equal(t, 5, cap(bitmap))
+	assert.Equal(t, Bitmap{42}, bitmap)
+
+	bitmap.grow(4)
+	assert.Equal(t, 5, len(bitmap))
+	assert.Equal(t, 5, cap(bitmap))
+	assert.Equal(t, Bitmap{42, 0, 0, 0, 0}, bitmap)
+
+	bitmap.grow(5)
+	assert.Equal(t, 6, len(bitmap))
+	assert.Equal(t, Bitmap{42, 0, 0, 0, 0, 0}, bitmap)
+}

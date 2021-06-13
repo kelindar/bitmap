@@ -53,7 +53,7 @@ func (dst *Bitmap) And(b Bitmap) {
 		simd.And(a, b)
 	} else {
 		a := *dst
-		for i := 0; i < len(a); i++ {
+		for i := 0; i < len(b); i++ {
 			a[i] = a[i] & b[i]
 		}
 	}
@@ -69,7 +69,7 @@ func (dst *Bitmap) AndNot(b Bitmap) {
 	if simd.Supported {
 		simd.AndNot(a, b)
 	} else {
-		for i := 0; i < len(a); i++ {
+		for i := 0; i < len(b); i++ {
 			a[i] = a[i] &^ b[i]
 		}
 	}
@@ -85,7 +85,7 @@ func (dst *Bitmap) Or(b Bitmap) {
 	if simd.Supported {
 		simd.Or(a, b)
 	} else {
-		for i := 0; i < len(a); i++ {
+		for i := 0; i < len(b); i++ {
 			a[i] = a[i] | b[i]
 		}
 	}
@@ -101,7 +101,7 @@ func (dst *Bitmap) Xor(b Bitmap) {
 	if simd.Supported {
 		simd.Xor(a, b)
 	} else {
-		for i := 0; i < len(a); i++ {
+		for i := 0; i < len(b); i++ {
 			a[i] = a[i] ^ b[i]
 		}
 	}
@@ -180,11 +180,24 @@ func (dst Bitmap) CountTo(until uint32) int {
 	return sum
 }
 
-// grow gros whe size of the bitmap until we reach the desired block offset
+// grow grows the size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
-	for i := len(*dst); i <= blkAt; i++ {
-		*dst = append(*dst, 0)
+	// Note that a bitmap is automatically initialized with zeros.
+
+	// If blkAt is no greater that the current length, do nothing.
+	if len(*dst) > blkAt {
+		return
 	}
+
+	// If blkAt is no greater than the current capacity, resize the slice without copying.
+	if cap(*dst) > blkAt {
+		*dst = (*dst)[:blkAt+1]
+		return
+	}
+
+	old := *dst
+	*dst = make(Bitmap, blkAt+1)
+	copy(*dst, old)
 }
 
 // balance grows the destination bitmap to match the size of the source bitmap.
