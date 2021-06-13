@@ -3,17 +3,6 @@
 
 package bitmap
 
-import "math/bits"
-
-// Count returns the number of elements in this bitmap
-func (dst Bitmap) Count() int {
-	sum := 0
-	for i := 0; i < len(dst); i++ {
-		sum += bits.OnesCount64(dst[i])
-	}
-	return sum
-}
-
 // Range iterates over the bitmap elements. If the callback returns false it halts
 // the iteration.
 func (dst Bitmap) Range(f func(x uint32) bool) {

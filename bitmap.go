@@ -146,6 +146,40 @@ func (dst Bitmap) FirstZero() (uint32, bool) {
 	return 0, false
 }
 
+// Count returns the number of elements in this bitmap
+func (dst Bitmap) Count() int {
+	sum := 0
+	for i := 0; i < len(dst); i++ {
+		sum += bits.OnesCount64(dst[i])
+	}
+	return sum
+}
+
+// CountTo counts the number of elements in the bitmap up until the specified index. If until
+// is math.MaxUint32, it will return the count. The count is non-inclusive of the index.
+func (dst Bitmap) CountTo(until uint32) int {
+	if len(dst) == 0 {
+		return 0
+	}
+
+	// Figure out the index of the last block
+	blkUntil := int(until >> 6)
+	bitUntil := int(until % 64)
+	if blkUntil >= len(dst) {
+		blkUntil = len(dst) - 1
+	}
+
+	// Count the bits right before the last block
+	sum := 0
+	for i := 0; i < blkUntil; i++ {
+		sum += bits.OnesCount64(dst[i])
+	}
+
+	// Count the bits at the end
+	sum += bits.OnesCount64(dst[blkUntil] << (64 - uint64(bitUntil)))
+	return sum
+}
+
 // grow gros whe size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
 	for i := len(*dst); i <= blkAt; i++ {

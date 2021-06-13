@@ -4,30 +4,32 @@
 package bitmap
 
 import (
+	"math"
 	"testing"
 
 	"github.com/kelindar/bitmap/simd"
 	"github.com/stretchr/testify/assert"
 )
 
-// BenchmarkBitmap/set-8         	608127316	         1.979 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/remove-8      	775627708	         1.562 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/contains-8    	907577592	         1.299 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clear-8       	231583378	         5.163 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/ones-8        	39476930	        29.77 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/first-zero-8  	23612611	        50.82 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/min-8         	415250632	         2.916 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/max-8         	683142546	         1.763 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/count-8       	33334074	        34.88 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clone-8       	100000000	        11.46 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/simd-and-8    	74337927	        15.47 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/simd-andnot-8 	80220294	        14.92 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/simd-or-8     	81321524	        14.81 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/simd-xor-8    	80181888	        14.81 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/and-8         	29650201	        41.68 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/andnot-8      	26496499	        51.72 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/or-8          	20629934	        50.83 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/xor-8         	23786632	        51.46 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/set-8         	608870326	         1.965 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/remove-8      	775597629	         1.536 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/contains-8    	944423806	         1.268 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clear-8       	236445094	         5.031 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/ones-8        	39465505	        28.65 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/first-zero-8  	23370946	        50.62 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/min-8         	438102824	         2.763 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/max-8         	670494444	         1.749 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/count-8       	23691301	        51.25 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/count-to-8    	29132576	        40.73 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clone-8       	100000000	        11.76 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-and-8    	74868044	        15.57 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-andnot-8 	82491885	        14.54 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-or-8     	83112046	        14.68 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/simd-xor-8    	100000000	        14.77 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/and-8         	38174616	        41.38 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/andnot-8      	26024666	        50.10 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/or-8          	23481067	        50.08 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/xor-8         	23717570	        50.19 ns/op	       0 B/op	       0 allocs/op
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
 	other.Set(5000)
@@ -66,6 +68,10 @@ func BenchmarkBitmap(b *testing.B) {
 
 	run(b, "count", func(index Bitmap) {
 		index.Count()
+	})
+
+	run(b, "count-to", func(index Bitmap) {
+		index.CountTo(5001)
 	})
 
 	var into Bitmap
@@ -284,4 +290,28 @@ func TestFirstZero(t *testing.T) {
 		assert.False(t, ok)
 		assert.Equal(t, 0, int(v))
 	}
+}
+
+func TestCount(t *testing.T) {
+	a := Bitmap{}
+	assert.Equal(t, 0, a.Count())
+	assert.Equal(t, 0, a.CountTo(math.MaxUint32))
+
+	b := Bitmap{}
+	b.Set(1)
+	b.Set(2)
+	b.Set(5)
+	b.Set(6)
+	b.Set(101)
+	b.Set(102)
+	b.Set(105)
+	b.Set(106)
+
+	assert.Equal(t, 8, b.Count())
+	assert.Equal(t, 1, b.CountTo(2))
+	assert.Equal(t, 2, b.CountTo(4))
+	assert.Equal(t, 4, b.CountTo(100))
+	assert.Equal(t, 4, b.CountTo(101))
+	assert.Equal(t, 5, b.CountTo(102))
+	assert.Equal(t, 8, b.CountTo(math.MaxUint32))
 }
