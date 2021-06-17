@@ -84,12 +84,8 @@ func (dst Bitmap) Clone(into *Bitmap) Bitmap {
 
 // Clear clears the bitmap and resizes it to zero.
 func (dst *Bitmap) Clear() {
-	if size := len(*dst); size > 0 {
-		ptr := unsafe.Pointer(&(*dst)[0])
-		memclrNoHeapPointers(ptr, uintptr(size))
-		*dst = (*dst)[:0]
+	for i := range *dst {
+		(*dst)[i] = 0
 	}
+	*dst = (*dst)[:0]
 }
-
-//go:linkname memclrNoHeapPointers runtime.memclrNoHeapPointers
-func memclrNoHeapPointers(p unsafe.Pointer, n uintptr)

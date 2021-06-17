@@ -14,7 +14,7 @@ import (
 // BenchmarkBitmap/set-8         	608870326	         1.965 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/remove-8      	775597629	         1.536 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/contains-8    	944423806	         1.268 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkBitmap/clear-8       	236445094	         5.031 ns/op	       0 B/op	       0 allocs/op
+// BenchmarkBitmap/clear-8         	130438411	         9.250 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/ones-8        	39465505	        28.65 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/first-zero-8  	23370946	        50.62 ns/op	       0 B/op	       0 allocs/op
 // BenchmarkBitmap/min-8         	438102824	         2.763 ns/op	       0 B/op	       0 allocs/op
@@ -114,7 +114,6 @@ func BenchmarkBitmap(b *testing.B) {
 	run(b, "xor", func(index Bitmap) {
 		index.AndNot(other)
 	})
-
 }
 
 func TestSetRemove(t *testing.T) {
@@ -132,15 +131,17 @@ func TestSetRemove(t *testing.T) {
 
 func TestClear(t *testing.T) {
 	index := Bitmap{}
-	for i := uint32(100); i < 200; i++ {
+	for i := uint32(0); i < 500; i++ {
 		index.Set(i)
 		assert.True(t, index.Contains(i))
 	}
 
 	index.Clear()
-	for i := uint32(100); i < 200; i++ {
-		assert.False(t, index.Contains(i))
+	index.Set(500)
+	for i := uint32(0); i < 500; i++ {
+		assert.False(t, index.Contains(i), i)
 	}
+	assert.True(t, index.Contains(500))
 }
 
 func TestTruthTables(t *testing.T) {
