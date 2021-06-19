@@ -196,7 +196,7 @@ func (dst *Bitmap) grow(blkAt int) {
 	}
 
 	old := *dst
-	*dst = make(Bitmap, blkAt+1)
+	*dst = make(Bitmap, blkAt+1, capacityFor(blkAt+1))
 	copy(*dst, old)
 }
 
@@ -205,4 +205,16 @@ func (dst *Bitmap) balance(src Bitmap) {
 	if len(*dst) < len(src) {
 		dst.grow(len(src) - 1)
 	}
+}
+
+// capacityFor computes the next power of 2 for a given index
+func capacityFor(v int) int {
+	v--
+	v |= v >> 1
+	v |= v >> 2
+	v |= v >> 4
+	v |= v >> 8
+	v |= v >> 16
+	v++
+	return int(v)
 }
