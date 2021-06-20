@@ -48,7 +48,7 @@ func generate(op string) {
 	Pragma("noescape")
 	a := Mem{Base: Load(Param("a").Base(), GP64())}
 	b := Mem{Base: Load(Param("b").Base(), GP64())}
-	n := Load(Param("a").Len(), GP64())
+	n := Load(Param("b").Len(), GP64())
 
 	// The register for the tail, we xor it with itself to zero out
 	s := GP64()

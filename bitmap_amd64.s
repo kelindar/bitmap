@@ -11,7 +11,7 @@
 TEXT ·x64and(SB), NOSPLIT, $0-48
 	MOVQ a_base+0(FP), AX
 	MOVQ b_base+24(FP), CX
-	MOVQ a_len+8(FP), DX
+	MOVQ b_len+32(FP), DX
 	XORQ BX, BX
 
 	// perform vectorized operation for every block of 512 bits
@@ -56,7 +56,7 @@ done:
 TEXT ·x64andn(SB), NOSPLIT, $0-48
 	MOVQ a_base+0(FP), AX
 	MOVQ b_base+24(FP), CX
-	MOVQ a_len+8(FP), DX
+	MOVQ b_len+32(FP), DX
 	XORQ BX, BX
 
 	// perform vectorized operation for every block of 512 bits
@@ -101,7 +101,7 @@ done:
 TEXT ·x64or(SB), NOSPLIT, $0-48
 	MOVQ a_base+0(FP), AX
 	MOVQ b_base+24(FP), CX
-	MOVQ a_len+8(FP), DX
+	MOVQ b_len+32(FP), DX
 	XORQ BX, BX
 
 	// perform vectorized operation for every block of 512 bits
@@ -146,7 +146,7 @@ done:
 TEXT ·x64xor(SB), NOSPLIT, $0-48
 	MOVQ a_base+0(FP), AX
 	MOVQ b_base+24(FP), CX
-	MOVQ a_len+8(FP), DX
+	MOVQ b_len+32(FP), DX
 	XORQ BX, BX
 
 	// perform vectorized operation for every block of 512 bits

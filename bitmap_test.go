@@ -11,22 +11,22 @@ import (
 )
 
 /*
-cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
-BenchmarkBitmap/set-12         	271467813	         4.335 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/remove-12      	677338836	         1.779 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/contains-12    	806530189	         1.497 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clear-12       	100000000	        10.47 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/ones-12        	36235255	        33.55 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/first-zero-12  	26520604	        45.69 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-12         	369584089	         3.258 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-12         	608877200	         1.987 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-12       	29074789	        41.11 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-to-12    	24887761	        48.39 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clone-12       	63780740	        18.90 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/and-12         	59301794	        20.58 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/andnot-12      	53553556	        22.45 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/or-12          	52102473	        22.43 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/xor-12         	51208834	        22.55 ns/op	       0 B/op	       0 allocs/op
+cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
+BenchmarkBitmap/set-8         	289266896	         4.128 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/remove-8      	764564474	         1.578 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/contains-8    	915430263	         1.310 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clear-8       	132351666	         9.137 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/ones-8        	39483814	        29.64 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/first-zero-8  	23734270	        51.10 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-8         	420580548	         2.861 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-8         	716387971	         1.760 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-8       	39584364	        36.55 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-to-8    	29685334	        36.33 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clone-8       	77323269	        15.82 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/and-8         	70506116	        17.84 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/andnot-8      	100000000	        17.83 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/or-8          	100000000	        17.65 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/xor-8         	60004200	        17.31 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
@@ -139,17 +139,17 @@ func testTruthTables(t *testing.T) {
 	}
 	{ // AND NOT
 		a := Bitmap{0b0011, 0, 0, 0}
-		a.AndNot(Bitmap{0b0101, 0, 0, 0})
+		a.AndNot(Bitmap{0b0101})
 		assert.Equal(t, 0b0010, int(a[0]))
 	}
 	{ // OR
 		a := Bitmap{0b0011, 0, 0, 0}
-		a.Or(Bitmap{0b0101, 0, 0, 0})
+		a.Or(Bitmap{0b0101})
 		assert.Equal(t, 0b0111, int(a[0]))
 	}
 	{ // XOR
 		a := Bitmap{0b0011, 0, 0, 0}
-		a.Xor(Bitmap{0b0101, 0, 0, 0})
+		a.Xor(Bitmap{0b0101})
 		assert.Equal(t, 0b0110, int(a[0]))
 	}
 }

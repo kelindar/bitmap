@@ -46,7 +46,7 @@ func (dst Bitmap) Contains(x uint32) bool {
 
 // And computes the intersection between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) And(b Bitmap) {
-	if dst.balance(b); len(*dst) != len(b) {
+	if dst.balance(b); len(*dst) < len(b) {
 		return // Elliminate bounds check
 	}
 
@@ -63,7 +63,7 @@ func (dst *Bitmap) And(b Bitmap) {
 
 // AndNot computes the difference between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) AndNot(b Bitmap) {
-	if dst.balance(b); len(*dst) != len(b) {
+	if dst.balance(b); len(*dst) < len(b) {
 		return // Elliminate bounds check
 	}
 
@@ -80,7 +80,7 @@ func (dst *Bitmap) AndNot(b Bitmap) {
 
 // Or computes the union between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) Or(b Bitmap) {
-	if dst.balance(b); len(*dst) != len(b) {
+	if dst.balance(b); len(*dst) < len(b) {
 		return // Elliminate bounds check
 	}
 
@@ -97,7 +97,7 @@ func (dst *Bitmap) Or(b Bitmap) {
 
 // Xor computes the symmetric difference between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) Xor(b Bitmap) {
-	if dst.balance(b); len(*dst) != len(b) {
+	if dst.balance(b); len(*dst) < len(b) {
 		return // Elliminate bounds check
 	}
 
