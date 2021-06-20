@@ -6,8 +6,10 @@ package bitmap
 import (
 	"math/bits"
 
-	"github.com/kelindar/bitmap/simd"
+	"github.com/klauspost/cpuid/v2"
 )
+
+var avx2 = cpuid.CPU.Supports(cpuid.AVX2)
 
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
@@ -48,10 +50,10 @@ func (dst *Bitmap) And(b Bitmap) {
 		return // Elliminate bounds check
 	}
 
-	a := *dst
-	if simd.Supported {
-		simd.And(a, b)
-	} else {
+	switch avx2 {
+	case true:
+		x64and(*dst, b)
+	default:
 		a := *dst
 		for i := 0; i < len(b); i++ {
 			a[i] = a[i] & b[i]
@@ -65,10 +67,11 @@ func (dst *Bitmap) AndNot(b Bitmap) {
 		return // Elliminate bounds check
 	}
 
-	a := *dst
-	if simd.Supported {
-		simd.AndNot(a, b)
-	} else {
+	switch avx2 {
+	case true:
+		x64andn(*dst, b)
+	default:
+		a := *dst
 		for i := 0; i < len(b); i++ {
 			a[i] = a[i] &^ b[i]
 		}
@@ -81,10 +84,11 @@ func (dst *Bitmap) Or(b Bitmap) {
 		return // Elliminate bounds check
 	}
 
-	a := *dst
-	if simd.Supported {
-		simd.Or(a, b)
-	} else {
+	switch avx2 {
+	case true:
+		x64or(*dst, b)
+	default:
+		a := *dst
 		for i := 0; i < len(b); i++ {
 			a[i] = a[i] | b[i]
 		}
@@ -97,10 +101,11 @@ func (dst *Bitmap) Xor(b Bitmap) {
 		return // Elliminate bounds check
 	}
 
-	a := *dst
-	if simd.Supported {
-		simd.Xor(a, b)
-	} else {
+	switch avx2 {
+	case true:
+		x64xor(*dst, b)
+	default:
+		a := *dst
 		for i := 0; i < len(b); i++ {
 			a[i] = a[i] ^ b[i]
 		}
@@ -178,6 +183,11 @@ func (dst Bitmap) CountTo(until uint32) int {
 	// Count the bits at the end
 	sum += bits.OnesCount64(dst[blkUntil] << (64 - uint64(bitUntil)))
 	return sum
+}
+
+// Grow grows the bitmap size until we reach the desired bit.
+func (dst *Bitmap) Grow(desiredBit uint32) {
+	dst.grow(int(desiredBit >> 6))
 }
 
 // grow grows the size of the bitmap until we reach the desired block offset

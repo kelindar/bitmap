@@ -1,16 +1,25 @@
+// Copyright (c) Roman Atachiants and contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
 // +build ignore
 
 package main
+
+//go:generate go run asm.go -out ../bitmap_amd64.s -stubs ../stub_amd64.go -pkg=bitmap
 
 import (
 	"strings"
 
 	. "github.com/mmcloughlin/avo/build"
+	"github.com/mmcloughlin/avo/buildtags"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
 )
 
 func main() {
+	Constraint(buildtags.Not("appengine").ToConstraint())
+	Constraint(buildtags.Not("noasm").ToConstraint())
+	Constraint(buildtags.Term("gc").ToConstraint())
 	generate("and")
 	generate("andnot")
 	generate("or")
@@ -22,20 +31,21 @@ func main() {
 func generate(op string) {
 	switch op {
 	case "and":
-		TEXT("And", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("And And computes the intersection between two slices and stores the result in the first one")
+		TEXT("x64and", NOSPLIT, "func(a []uint64, b []uint64)")
+		Doc("x64and (AND) computes the intersection between two slices and stores the result in the first one")
 	case "or":
-		TEXT("Or", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("Or computes the union between two slices and stores the result in the first one")
+		TEXT("x64or", NOSPLIT, "func(a []uint64, b []uint64)")
+		Doc("x64or (OR) computes the union between two slices and stores the result in the first one")
 	case "andnot":
-		TEXT("AndNot", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("AndNot computes the difference between two slices and stores the result in the first one")
+		TEXT("x64andn", NOSPLIT, "func(a []uint64, b []uint64)")
+		Doc("x64andn (AND NOT) computes the difference between two slices and stores the result in the first one")
 	case "xor":
-		TEXT("Xor", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("Xor computes the symmetric difference between two slices and stores the result in the first one")
+		TEXT("x64xor", NOSPLIT, "func(a []uint64, b []uint64)")
+		Doc("x64xor (XOR) computes the symmetric difference between two slices and stores the result in the first one")
 	}
 
 	// Load the a and b addresses as well as the current len(a). Assume len(a) == len(b)
+	Pragma("noescape")
 	a := Mem{Base: Load(Param("a").Base(), GP64())}
 	b := Mem{Base: Load(Param("b").Base(), GP64())}
 	n := Load(Param("a").Len(), GP64())
