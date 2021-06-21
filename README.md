@@ -11,8 +11,8 @@
 
 # Zero-Allocation, SIMD Bitmap Index (Bitset) in Go
 
-This package contaisn a bitmap index which is backed by `uint64` slice, easily encodable to/from a `[]byte` without copying memory around so it can be present
-in both disk and memory. As opposed to something as [roaring bitmaps](https://github.com/RoaringBitmap/roaring), this is a simple impementation designed to be used for small to medium dense collections.
+This package contains a bitmap index which is backed by `uint64` slice, easily encodable to/from a `[]byte` without copying memory around so it can be present
+in both disk and memory. As opposed to something as [roaring bitmaps](https://github.com/RoaringBitmap/roaring), this is a simple implementation designed to be used for small to medium dense collections.
 
 I've used this package to build a columnar in-memory datastore, so if you want to see how it can be used for indexing, have a look at [kelindar/column](https://github.com/kelindar/column). I'd like to specifically point out the indexing part and how bitmaps can be used as a good alternative to B*Trees and Hash Maps.
 
