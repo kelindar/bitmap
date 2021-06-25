@@ -5,7 +5,7 @@
 
 package main
 
-//go:generate go run amd64.go -out ../bitmap_amd64.s -stubs ../stub_amd64.go -pkg=bitmap
+//go:generate go run amd64.go -out ../simd_amd64.s -stubs ../simd_amd64.go -pkg=bitmap
 
 import (
 	"strings"

@@ -5,13 +5,6 @@ package bitmap
 
 import (
 	"math/bits"
-
-	"github.com/klauspost/cpuid/v2"
-)
-
-var (
-	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
-	popc = cpuid.CPU.Supports(cpuid.POPCNT)
 )
 
 // Bitmap represents a scalar-backed bitmap index
@@ -45,88 +38,6 @@ func (dst Bitmap) Contains(x uint32) bool {
 
 	bitAt := int(x % 64)
 	return (dst[blkAt] & (1 << bitAt)) > 0
-}
-
-// And computes the intersection between two bitmaps and stores the result in the current bitmap
-func (dst *Bitmap) And(b Bitmap) {
-	if dst.balance(b); len(*dst) < len(b) {
-		return // Elliminate bounds check
-	}
-
-	switch avx2 {
-	case true:
-		x64and(*dst, b)
-	default:
-		a := *dst
-		for i := 0; i < len(b); i++ {
-			a[i] = a[i] & b[i]
-		}
-	}
-}
-
-// AndNot computes the difference between two bitmaps and stores the result in the current bitmap
-func (dst *Bitmap) AndNot(b Bitmap) {
-	if dst.balance(b); len(*dst) < len(b) {
-		return // Elliminate bounds check
-	}
-
-	switch avx2 {
-	case true:
-		x64andn(*dst, b)
-	default:
-		a := *dst
-		for i := 0; i < len(b); i++ {
-			a[i] = a[i] &^ b[i]
-		}
-	}
-}
-
-// Or computes the union between two bitmaps and stores the result in the current bitmap
-func (dst *Bitmap) Or(b Bitmap) {
-	if dst.balance(b); len(*dst) < len(b) {
-		return // Elliminate bounds check
-	}
-
-	switch avx2 {
-	case true:
-		x64or(*dst, b)
-	default:
-		a := *dst
-		for i := 0; i < len(b); i++ {
-			a[i] = a[i] | b[i]
-		}
-	}
-}
-
-// Xor computes the symmetric difference between two bitmaps and stores the result in the current bitmap
-func (dst *Bitmap) Xor(b Bitmap) {
-	if dst.balance(b); len(*dst) < len(b) {
-		return // Elliminate bounds check
-	}
-
-	switch avx2 {
-	case true:
-		x64xor(*dst, b)
-	default:
-		a := *dst
-		for i := 0; i < len(b); i++ {
-			a[i] = a[i] ^ b[i]
-		}
-	}
-}
-
-// Count returns the number of elements in this bitmap
-func (dst Bitmap) Count() int {
-	switch popc {
-	case true:
-		return int(x64count(dst))
-	default:
-		sum := 0
-		for i := 0; i < len(dst); i++ {
-			sum += bits.OnesCount64(dst[i])
-		}
-		return sum
-	}
 }
 
 // Ones sets the entire bitmap to one

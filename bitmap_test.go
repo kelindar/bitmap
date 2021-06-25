@@ -13,21 +13,21 @@ import (
 
 /*
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8         	289266896	         4.128 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/remove-8      	764564474	         1.578 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/contains-8    	915430263	         1.310 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clear-8       	132351666	         9.137 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/ones-8        	39483814	        29.64 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/first-zero-8  	23734270	        51.10 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-8         	420580548	         2.861 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-8         	716387971	         1.760 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-8       	39584364	        36.55 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-to-8    	29685334	        36.33 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clone-8       	77323269	        15.82 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/and-8         	70506116	        17.84 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/andnot-8      	100000000	        17.83 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/or-8          	100000000	        17.65 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/xor-8         	60004200	        17.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/set-8         	289575987	         4.122 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/remove-8      	761542122	         1.561 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/contains-8    	908733610	         1.312 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clear-8       	131705713	         9.073 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/ones-8        	40716474	        30.01 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/first-zero-8  	23821670	        50.43 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-8         	420276520	         2.860 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-8         	777923565	         1.542 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-8       	42097286	        27.89 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-to-8    	27890955	        42.65 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clone-8       	75004218	        15.62 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/and-8         	70589480	        17.22 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/andnot-8      	70588650	        17.32 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/or-8          	66248564	        17.33 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/xor-8         	70587819	        17.46 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100)
