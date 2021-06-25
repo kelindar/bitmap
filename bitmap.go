@@ -69,11 +69,22 @@ func (dst Bitmap) Max() (uint32, bool) {
 	return 0, false
 }
 
-// FirstZero finds the first zero bit and returns its index, assuming the bitmap is not empty.
-func (dst Bitmap) FirstZero() (uint32, bool) {
+// MinZero finds the first zero bit and returns its index, assuming the bitmap is not empty.
+func (dst Bitmap) MinZero() (uint32, bool) {
 	for blkAt, blk := range dst {
 		if blk != 0xffffffffffffffff {
 			return uint32(blkAt<<6 + bits.TrailingZeros64(^blk)), true
+		}
+	}
+	return 0, false
+}
+
+// MaxZero get the last zero bit and return its index, assuming bitmap is not empty
+func (dst Bitmap) MaxZero() (uint32, bool) {
+	var blk uint64
+	for blkAt := len(dst) - 1; blkAt >= 0; blkAt-- {
+		if blk = dst[blkAt]; blk != 0xffffffffffffffff {
+			return uint32(blkAt<<6 + (63 - bits.LeadingZeros64(^blk))), true
 		}
 	}
 	return 0, false
@@ -94,10 +105,7 @@ func (dst Bitmap) CountTo(until uint32) int {
 	}
 
 	// Count the bits right before the last block
-	sum := 0
-	for i := 0; i < blkUntil; i++ {
-		sum += bits.OnesCount64(dst[i])
-	}
+	sum := dst[:blkUntil].Count()
 
 	// Count the bits at the end
 	sum += bits.OnesCount64(dst[blkUntil] << (64 - uint64(bitUntil)))

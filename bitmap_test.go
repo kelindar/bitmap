@@ -30,8 +30,8 @@ BenchmarkBitmap/or-8          	66248564	        17.33 ns/op	       0 B/op	      
 BenchmarkBitmap/xor-8         	70587819	        17.46 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
-	other := make(Bitmap, 100)
-	other.Set(5000)
+	other := make(Bitmap, 100000/64)
+	other.Set(100000)
 
 	run(b, "set", func(index Bitmap) {
 		index.Set(5000)
@@ -53,16 +53,20 @@ func BenchmarkBitmap(b *testing.B) {
 		index.Ones()
 	})
 
-	run(b, "first-zero", func(index Bitmap) {
-		index.FirstZero()
-	})
-
 	run(b, "min", func(index Bitmap) {
 		index.Min()
 	})
 
 	run(b, "max", func(index Bitmap) {
 		index.Max()
+	})
+
+	run(b, "min-zero", func(index Bitmap) {
+		index.MinZero()
+	})
+
+	run(b, "max-zero", func(index Bitmap) {
+		index.MaxZero()
 	})
 
 	run(b, "count", func(index Bitmap) {
@@ -261,10 +265,10 @@ func TestMax(t *testing.T) {
 	}
 }
 
-func TestFirstZero(t *testing.T) {
+func TestMinZero(t *testing.T) {
 	{
-		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffff0f}
-		v, ok := a.FirstZero()
+		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff, 0xf0ffffffffffff0f}
+		v, ok := a.MinZero()
 		assert.True(t, ok)
 		assert.Equal(t, 64+64+4, int(v))
 		assert.False(t, a.Contains(v))
@@ -272,7 +276,24 @@ func TestFirstZero(t *testing.T) {
 
 	{
 		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff}
-		v, ok := a.FirstZero()
+		v, ok := a.MinZero()
+		assert.False(t, ok)
+		assert.Equal(t, 0, int(v))
+	}
+}
+
+func TestMaxZero(t *testing.T) {
+	{
+		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffff0f}
+		v, ok := a.MaxZero()
+		assert.True(t, ok)
+		assert.Equal(t, 64+64+7, int(v))
+		assert.False(t, a.Contains(v))
+	}
+
+	{
+		a := Bitmap{0xffffffffffffffff, 0xffffffffffffffff}
+		v, ok := a.MaxZero()
 		assert.False(t, ok)
 		assert.Equal(t, 0, int(v))
 	}
