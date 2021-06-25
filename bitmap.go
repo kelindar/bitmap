@@ -9,7 +9,10 @@ import (
 	"github.com/klauspost/cpuid/v2"
 )
 
-var avx2 = cpuid.CPU.Supports(cpuid.AVX2)
+var (
+	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
+	popc = cpuid.CPU.Supports(cpuid.POPCNT)
+)
 
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
@@ -112,6 +115,20 @@ func (dst *Bitmap) Xor(b Bitmap) {
 	}
 }
 
+// Count returns the number of elements in this bitmap
+func (dst Bitmap) Count() int {
+	switch popc {
+	case true:
+		return int(x64count(dst))
+	default:
+		sum := 0
+		for i := 0; i < len(dst); i++ {
+			sum += bits.OnesCount64(dst[i])
+		}
+		return sum
+	}
+}
+
 // Ones sets the entire bitmap to one
 func (dst Bitmap) Ones() {
 	for i := 0; i < len(dst); i++ {
@@ -149,15 +166,6 @@ func (dst Bitmap) FirstZero() (uint32, bool) {
 		}
 	}
 	return 0, false
-}
-
-// Count returns the number of elements in this bitmap
-func (dst Bitmap) Count() int {
-	sum := 0
-	for i := 0; i < len(dst); i++ {
-		sum += bits.OnesCount64(dst[i])
-	}
-	return sum
 }
 
 // CountTo counts the number of elements in the bitmap up until the specified index. If until

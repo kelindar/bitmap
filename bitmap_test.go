@@ -7,6 +7,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/klauspost/cpuid/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -278,6 +279,16 @@ func TestFirstZero(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
+	testCount(t, true)
+	testCount(t, false)
+}
+
+func testCount(t *testing.T, x64 bool) {
+	popc = x64
+	defer func() {
+		popc = cpuid.CPU.Supports(cpuid.POPCNT)
+	}()
+
 	a := Bitmap{}
 	assert.Equal(t, 0, a.Count())
 	assert.Equal(t, 0, a.CountTo(math.MaxUint32))
