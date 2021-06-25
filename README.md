@@ -9,23 +9,68 @@
 </p>
 
 
-# Zero-Allocation, SIMD Bitmap Index (Bitset) in Go
+## SIMD-Vectorized Bitmap (Bitset) in Go
 
-This package contains a bitmap index which is backed by `uint64` slice, easily encodable to/from a `[]byte` without copying memory around so it can be present
-in both disk and memory. As opposed to something as [roaring bitmaps](https://github.com/RoaringBitmap/roaring), this is a simple implementation designed to be used for small to medium dense collections.
-
-I've used this package to build a columnar in-memory datastore, so if you want to see how it can be used for indexing, have a look at [kelindar/column](https://github.com/kelindar/column). I'd like to specifically point out the indexing part and how bitmaps can be used as a good alternative to B*Trees and Hash Maps.
+This package contains a bitmap implementation, backed by a slice of `[]uint64` and designed for *dense* small or medium collections. This implementation focuses on high performance by avoiding heap allocations, unrolling loops and implementing SIMD vectorization in assembly.
 
 ## Features
 
- * **Zero-allocation** (see benchmarks below) on almost all of the important APIs.
- * **1-2 nanosecond** on single-bit operations (set/remove/contains).
- * **SIMD enhanced** `and`, `and not`, `or` and `xor` operations, specifically using `AVX2` (256-bit).
- * Support for `and`, `and not`, `or` and `xor` which allows you to compute intersect, difference, union and symmetric difference between 2 bitmaps.
- * Support for `min`, `max`, `count`, and `first-zero` which is very useful for building free-lists using a bitmap index.
- * Reusable and can be pooled, providing `clone` with a destination and `clear` operations.
- * Can be encoded to binary without copy as well as optional stream `WriteTo` method.
- * Support for iteration via `Range` method and filtering via `Filter` method.
+ * Optimized for **zero heap allocation** for all of the important methods of the bitmap.
+ * Optimized by **vectorized instructions (SIMD)** used for certain operations such as boolean algebra.
+ * Support for **boolean algebra** that makes it perfect to implement [bitmap indexes](https://en.wikipedia.org/wiki/Bitmap_index).
+ * Support for **bit counting** with operations such `Min()`, `Max()`, `Count()` and more.
+ * Support for **fast iteration** over bits set to one by using an unrolled loop.
+ * Support for **in-place filtering** based on a user-defined predicate.
+ * Support for **binary encoding** and can be read/written and has a no-copy slice conversion.
+ * Support for **reusability** by providing `Clone()` and `Clear()` operations.
+
+## Documentation
+
+The general idea of this package is to have a dead simple way of creating bitmaps (bitsets) that provide maximum performance on the modern hardware by using vectorized single-instruction multiple data ([SIMD](https://en.wikipedia.org/wiki/SIMD)) operations. As opposed to something as [roaring bitmaps](https://github.com/RoaringBitmap/roaring) which are excellent for sparse data, this implementation is designed to be used for small or medium dense bit sets. I've used this package to build a columnar in-memory store, so if you want to see how it can be used for indexing, have a look at [kelindar/column](https://github.com/kelindar/column). I'd like to specifically point out the indexing part and how bitmaps can be used as a good alternative to B*Trees and Hash Maps.
+
+- [Boolean Algebra](#boolean-algebra)
+- [Example Usage](#example-usage)
+- [Benchmarks](#benchmarks)
+- [Contributing](#contributing)
+
+
+## Boolean Algebra
+
+Perhaps one of the most useful features of this package is the vectorized implementation of boolean operations allowing us to perform boolean algebra on multiple bitmaps. For example, let's imagine that we have a dataset containing books, and four bitmaps defining one of the four properties of each book. In the figure below, you can imagine that our books can be on "columns" and each bit in a bitmap defines whether this attribute exists on a book or not.
+
+
+<p align="center">
+<img width="630" height="175" src=".github/bitmap1.png" border="0" alt="kelindar/bitmap">
+</p>
+
+Now, if we want to find all books that were recently published and have an ebook available, we can use an `And()` method on our two bitmaps in order to combine them. In the example below we retrieve 3 hypothetical bitmaps and combine them to answer our query by calling and `And()` method to mutate the `books` bitmap twice.
+
+```go
+books  := bitmapFor("books")           // bitmap.Bitmap
+recent := bitmapFor("books_recent")    // bitmap.Bitmap
+ebooks := bitmapFor("books_has_ebook") // bitmap.Bitmap
+
+// And operation actually mutates our "books" bitmap
+books.And(recent)
+books.And(ebooks)
+```
+
+<p align="center">
+<img width="630" height="175" src=".github/bitmap2.png" border="0" alt="kelindar/bitmap">
+</p>
+
+Now, what if we want to find recently published books which has e-book available but are *not* best-sellers? In that case, we could use binary `AndNot()` operation that hardware exposes. In the example below we combine
+
+```go
+books.And(recent)
+books.And(ebooks)
+books.AndNot(bestsellers) 
+```
+
+<p align="center">
+<img width="630" height="175" src=".github/bitmap3.png" border="0" alt="kelindar/bitmap">
+</p>
+
 
 ## Example Usage
 
@@ -113,3 +158,11 @@ BenchmarkBitmap/andnot-8      	26496499      51.72 ns/op     0 B/op    0 allocs/
 BenchmarkBitmap/or-8          	20629934      50.83 ns/op     0 B/op    0 allocs/op
 BenchmarkBitmap/xor-8         	23786632      51.46 ns/op     0 B/op    0 allocs/op
 ```
+
+## Contributing
+
+We are open to contributions, feel free to submit a pull request and we'll review it as quickly as we can. This library is maintained by [Roman Atachiants](https://www.linkedin.com/in/atachiants/)
+
+## License
+
+Tile is licensed under the [MIT License](LICENSE.md).
