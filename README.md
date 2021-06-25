@@ -29,14 +29,23 @@ This package contains a bitmap implementation, backed by a slice of `[]uint64` a
 The general idea of this package is to have a dead simple way of creating bitmaps (bitsets) that provide maximum performance on the modern hardware by using vectorized single-instruction multiple data ([SIMD](https://en.wikipedia.org/wiki/SIMD)) operations. As opposed to something as [roaring bitmaps](https://github.com/RoaringBitmap/roaring) which are excellent for sparse data, this implementation is designed to be used for small or medium dense bit sets. I've used this package to build a columnar in-memory store, so if you want to see how it can be used for indexing, have a look at [kelindar/column](https://github.com/kelindar/column). I'd like to specifically point out the indexing part and how bitmaps can be used as a good alternative to B*Trees and Hash Maps.
 
 - [Boolean Algebra](#boolean-algebra)
+- [Single Bit Operations](#single-bit-operations)
+- [Bit Count and Search](#bit-count-and-search)
+- [Iterate and Filter](#iterate-and-filter)
 - [Example Usage](#example-usage)
 - [Benchmarks](#benchmarks)
 - [Contributing](#contributing)
 
+First, here's what you need to do in order to import this package.
+
+```go
+import "github.com/kelindar/bitmap"
+```
 
 ## Boolean Algebra
 
 Perhaps one of the most useful features of this package is the vectorized implementation of boolean operations allowing us to perform boolean algebra on multiple bitmaps. For example, let's imagine that we have a dataset containing books, and four bitmaps defining one of the four properties of each book. In the figure below, you can imagine that our books can be on "columns" and each bit in a bitmap defines whether this attribute exists on a book or not.
+
 
 
 <p align="center">
@@ -71,29 +80,37 @@ books.AndNot(bestsellers)
 <img width="630" height="175" src=".github/bitmap3.png" border="0" alt="kelindar/bitmap">
 </p>
 
+## Single Bit Operations
 
-## Example Usage
+When dealing with single elements, this package supports simple single-bit operations. They include `Set()` and `Remove()` to set a bit to one and to zero respectively, as well as `Contans()` to check for a presence (value set to one) of a certain bit. These methods are simple to use and setting a bit which is out of range would automatically resize the bitmap.
 
-In its simplest form, you can use the bitmap as a bitset, set and remove bits. This is quite useful as an index (free/fill-list) for an array of data.
-
-```go
-import "github.com/kelindar/bitmap"
-```
+In the example below we're creating a bitmap, setting one bit to one, checking its presence and setting it back to zero after.
 
 ```go
-bitmap := make(bitmap.Bitmap, 0, 8) // 8*64 = 512 elements pre-allocated
-bitmap.Set(300)         // sets 300-th bit
-bitmap.Set(400)         // sets 400-th bit
-bitmap.Set(600)         // sets 600-th bit (auto-resized)
-bitmap.Contains(300)    // returns true
-bitmap.Contains(301)    // returns false
-bitmap.Remove(400)      // clears 400-th bit
+var books bitmap.Bitmap
 
-// Min, Max, Count
-min, ok := bitmap.Min()  // returns 300
-max, ok := bitmap.Max() // returns 600
-count := bitmap.Count() // returns 2
+books.Set(3)                 // Set the 3rd bit to '1'
+hasBook := books.Contains(3) // Returns 'true'
+books.Remove(3)              // Set the 3rd bit to '0'
 ```
+
+## Bit Count and Search
+
+When using a bitmap for indexing or free-list purposes, you will often find yourself in need of counting how many bits are set in a bitmap. This operation actually has a specialized hardware instruction `POPCNT` and an efficient implementation is included in this library. The example below shows how you can simply count the number of bits in a bitmap by calling the `Count()` method.
+
+```go
+// Counts number of bits set to '1'
+numBooks := books.Count()
+```
+
+On the other hand, you might want to find a specific bit either set to one or to zero, the methods `Min()`, `Max()` allow you to find first or last bit set to one while `MinZero()` and `MaxZero()` allow you to find first or last bit set to zero. The figure below demonstrates an example of that.
+
+<p align="center">
+<img width="630" height="125" src=".github/bitmap4.png" border="0" alt="kelindar/bitmap">
+</p>
+
+
+## Iterate and Filter
 
 The bits in the bitmap can also be iterated over using the `Range` method. It is a simple loop which iterates over and calls a callback. If the callback returns false, then the iteration is halted (similar to `sync.Map`).
 
@@ -114,49 +131,58 @@ bitmap.Filter(func(x uint32) bool {
 })
 ```
 
-Bitmaps are also extremely useful as they support boolean operations very efficiently. This library contains `And`, `AndNot`, `Or` and `Xor`.
+## Example Usage
+
+In its simplest form, you can use the bitmap as a bitset, set and remove bits. This is quite useful as an index (free/fill-list) for an array of data.
 
 ```go
-// And computes the intersection between two bitmaps and stores the result in the current bitmap
-a := Bitmap{0b0011}
-a.And(Bitmap{0b0101})
+import "github.com/kelindar/bitmap"
+```
 
-// AndNot computes the difference between two bitmaps and stores the result in the current bitmap
-a := Bitmap{0b0011}
-a.AndNot(Bitmap{0b0101})
+```go
+var books := bitmap.Bitmap
+books.Set(300)      // sets 300-th bit
+books.Set(400)      // sets 400-th bit
+books.Set(600)      // sets 600-th bit (auto-resized)
+books.Contains(300) // returns true
+books.Contains(301) // returns false
+books.Remove(400)   // clears 400-th bit
 
-// Or computes the union between two bitmaps and stores the result in the current bitmap
-a := Bitmap{0b0011}
-a.Or(Bitmap{0b0101})
+// Min, Max, Count
+min, ok := books.Min() // returns 300
+max, ok := books.Max() // returns 600
+count := books.Count() // returns 2
 
-// Xor computes the symmetric difference between two bitmaps and stores the result in the current bitmap
-a := Bitmap{0b0011}
-a.Xor(Bitmap{0b0101})
+// Boolean algebra
+var other bitmap.Bitmap
+other.Set(300)
+books.And(other)      // Intersection
+count = books.Count() // Now returns 1
 ```
 
 ## Benchmarks
-Benchmarks below were run on a large pre-allocated bitmap (slice of 100 pages, 6400 items).
+Benchmarks below were run on a pre-allocated bitmap of **100,000** elements containing with around 50% bits set to one.
 
 ```
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8         	608127316     1.979 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/remove-8      	775627708     1.562 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/contains-8    	907577592     1.299 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/clear-8       	231583378     5.163 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/ones-8        	39476930      29.77 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/first-zero-8  	23612611      50.82 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/min-8         	415250632     2.916 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/max-8         	683142546     1.763 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/count-8       	33334074      34.88 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/clone-8       	100000000     11.46 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/simd-and-8    	74337927      15.47 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/simd-andnot-8 	80220294      14.92 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/simd-or-8     	81321524      14.81 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/simd-xor-8    	80181888      14.81 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/and-8         	29650201      41.68 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/andnot-8      	26496499      51.72 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/or-8          	20629934      50.83 ns/op     0 B/op    0 allocs/op
-BenchmarkBitmap/xor-8         	23786632      51.46 ns/op     0 B/op    0 allocs/op
+BenchmarkBitmap/set-8         552331321    4.319 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/remove-8     1000000000    1.621 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/contains-8   1000000000    1.309 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/clear-8        26083383    90.45 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/ones-8          6751939    347.9 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/min-8         757831477    3.137 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/max-8        1000000000    1.960 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/min-zero-8    776620110    3.081 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/max-zero-8   1000000000    1.536 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/count-8         6071037    382.5 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/count-to-8     82777459    28.85 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/clone-8        20654008    111.5 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/and-8          16813963    143.6 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/andnot-8       16961106    141.9 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/or-8           16999562    141.7 ns/op    0 B/op    0 allocs/op
+BenchmarkBitmap/xor-8          16954036    144.7 ns/op    0 B/op    0 allocs/op
+BenchmarkRange/range-8            18225   131908 ns/op    0 B/op    0 allocs/op
+BenchmarkRange/filter-8           25636    93630 ns/op    0 B/op    0 allocs/op
 ```
 
 ## Contributing
