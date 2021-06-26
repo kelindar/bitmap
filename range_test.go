@@ -1,13 +1,17 @@
 package bitmap
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-// BenchmarkRange/range-8         	   80398	     14697 ns/op	       0 B/op	       0 allocs/op
-// BenchmarkRange/filter-8        	  124311	      9587 ns/op	       0 B/op	       0 allocs/op
+/*
+cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
+BenchmarkRange/range-8         	   12834	     92889 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRange/filter-8        	   18354	     64827 ns/op	       0 B/op	       0 allocs/op
+*/
 func BenchmarkRange(b *testing.B) {
 	run(b, "range", func(index Bitmap) {
 		index.Range(func(x uint32) bool {
@@ -27,17 +31,26 @@ func TestFilter(t *testing.T) {
 	a.Ones()
 	assert.Equal(t, 256, a.Count())
 
-	// Filter out odd
-	a.Filter(func(x uint32) bool {
-		return x%2 == 0
-	})
-	assert.Equal(t, 128, a.Count())
+	{ // Filter out odd
+		count := 0
+		a.Filter(func(x uint32) bool {
+			count++
+			return x%2 == 0
+		})
+		assert.Equal(t, 256, count)
+		assert.Equal(t, 128, a.Count())
+	}
 
-	// Filter out even
-	a.Filter(func(x uint32) bool {
-		return x%2 == 1
-	})
-	assert.Equal(t, 0, a.Count())
+	{
+		// Filter out even
+		count := 0
+		a.Filter(func(x uint32) bool {
+			count++
+			return x%2 == 1
+		})
+		assert.Equal(t, 128, count)
+		assert.Equal(t, 0, a.Count())
+	}
 }
 
 func TestRange(t *testing.T) {
@@ -103,4 +116,28 @@ func run(b *testing.B, name string, f func(index Bitmap)) {
 			f(index)
 		}
 	})
+}
+
+func TestXXX(t *testing.T) {
+	for i := uint64(0); i < 64; i++ {
+
+		fmt.Printf("if blk&0x%x != 0 && !f(uint32(offset+%v)) {\n", uint64(1)<<i, i)
+		fmt.Printf("	return\n")
+		fmt.Printf("}\n")
+
+		//fmt.Printf("mask |= uint64((*binary)[%v]) << %v\n", i, i)
+		//fmt.Printf("blk &^= uint64((*binary)[%v]) << %v\n", i, i)
+
+		//fmt.Printf("if page[%v] {\n", i)
+		//fmt.Printf("	(*dst)[blkAt] &^= 0x%x\n", uint64(1)<<i)
+		//fmt.Printf("}\n")
+
+	}
+
+	/*bools := []bool{true, false, true, false}
+	bytes := *(*[]byte)(unsafe.Pointer(&bools))
+
+	fmt.Printf("value = '%+v'\n", bytes)*/
+
+	//assert.Fail(t, "xx")
 }
