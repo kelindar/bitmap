@@ -1,7 +1,6 @@
 package bitmap
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -116,28 +115,4 @@ func run(b *testing.B, name string, f func(index Bitmap)) {
 			f(index)
 		}
 	})
-}
-
-func TestXXX(t *testing.T) {
-	for i := uint64(0); i < 64; i++ {
-
-		fmt.Printf("if blk&0x%x != 0 && !f(uint32(offset+%v)) {\n", uint64(1)<<i, i)
-		fmt.Printf("	return\n")
-		fmt.Printf("}\n")
-
-		//fmt.Printf("mask |= uint64((*binary)[%v]) << %v\n", i, i)
-		//fmt.Printf("blk &^= uint64((*binary)[%v]) << %v\n", i, i)
-
-		//fmt.Printf("if page[%v] {\n", i)
-		//fmt.Printf("	(*dst)[blkAt] &^= 0x%x\n", uint64(1)<<i)
-		//fmt.Printf("}\n")
-
-	}
-
-	/*bools := []bool{true, false, true, false}
-	bytes := *(*[]byte)(unsafe.Pointer(&bools))
-
-	fmt.Printf("value = '%+v'\n", bytes)*/
-
-	//assert.Fail(t, "xx")
 }
