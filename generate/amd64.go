@@ -1,5 +1,6 @@
 // Copyright (c) Roman Atachiants and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
+// Initial code adapted from Marko Kevac (see https://github.com/mkevac/gopherconrussia2019)
 
 // +build ignore
 
