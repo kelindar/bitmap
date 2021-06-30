@@ -8,13 +8,15 @@ import (
 
 /*
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkRange/range-8         	   12834	     92889 ns/op	       0 B/op	       0 allocs/op
-BenchmarkRange/filter-8        	   18354	     64827 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRange/range-8         	   15823	     75607 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRange/filter-8        	   20366	     59646 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkRange(b *testing.B) {
+	var i uint32
 	run(b, "range", func(index Bitmap) {
-		index.Range(func(x uint32) bool {
-			return true
+		index.Range(func(x uint32) {
+			i = x
+			return
 		})
 	})
 
@@ -23,6 +25,8 @@ func BenchmarkRange(b *testing.B) {
 			return x%2 == 0
 		})
 	})
+
+	_ = i
 }
 
 func TestFilter(t *testing.T) {
@@ -30,60 +34,48 @@ func TestFilter(t *testing.T) {
 	a.Ones()
 	assert.Equal(t, 256, a.Count())
 
-	{ // Filter out odd
-		count := 0
-		a.Filter(func(x uint32) bool {
-			count++
-			return x%2 == 0
-		})
-		assert.Equal(t, 256, count)
-		assert.Equal(t, 128, a.Count())
-	}
-
-	{
-		// Filter out even
-		count := 0
-		a.Filter(func(x uint32) bool {
-			count++
-			return x%2 == 1
-		})
-		assert.Equal(t, 128, count)
-		assert.Equal(t, 0, a.Count())
-	}
-}
-
-func TestRange(t *testing.T) {
-	a := Bitmap{}
-	for i := uint32(0); i < 100; i += 2 {
-		a.Set(i)
-	}
-
-	count := 0
-	a.Range(func(x uint32) bool {
-		count++
-		return true
+	// Filter out odd
+	a.Filter(func(x uint32) bool {
+		return x%2 == 0
 	})
-	assert.Equal(t, 50, count)
-	assert.Equal(t, 50, a.Count())
+	assert.Equal(t, 128, a.Count())
+
+	// Filter out even
+	a.Filter(func(x uint32) bool {
+		assert.Equal(t, 0, int(x%2)) // Must be odd
+		return x%2 == 1
+	})
+	assert.Equal(t, 0, a.Count())
+
+	// Filter cases
+	for i := 0; i < 512; i++ {
+		b := Bitmap{uint64(i)}
+		c1 := b.Count()
+		c2 := 0
+		b.Filter(func(x uint32) bool {
+			c2++
+			return true
+		})
+
+		// We must have the minimum number of function calls
+		assert.Equal(t, c1, c2)
+		assert.Equal(t, uint64(i), b[0])
+	}
 }
 
 func TestRangeCases(t *testing.T) {
-	a := Bitmap{}
-	for i := uint32(0); i < 100; i++ {
-		a.Set(i)
-	}
-
-	for i := 0; i < 100; i++ {
-		count := 0
-		a.Range(func(x uint32) bool {
-			if count == i {
-				return false
-			}
-
-			count++
-			return true
+	for i := 0; i < 512; i++ {
+		b := Bitmap{uint64(i)}
+		c1 := b.Count()
+		c2 := 0
+		b.Range(func(x uint32) {
+			c2++
+			return
 		})
-		assert.Equal(t, i, count)
+
+		// We must have the minimum number of function calls
+		assert.Equal(t, c1, c2)
+		assert.Equal(t, uint64(i), b[0])
 	}
 }
 
@@ -92,9 +84,9 @@ func TestRangeIndex(t *testing.T) {
 	a.Ones()
 
 	triangular := 0
-	a.Range(func(x uint32) bool {
+	a.Range(func(x uint32) {
 		triangular += int(x)
-		return true
+		return
 	})
 	assert.Equal(t, 8128, triangular)
 }
