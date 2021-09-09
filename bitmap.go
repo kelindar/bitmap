@@ -141,6 +141,8 @@ func (dst *Bitmap) grow(blkAt int) {
 func (dst *Bitmap) balance(src Bitmap) {
 	if len(*dst) < len(src) {
 		dst.grow(len(src) - 1)
+	} else {
+		*dst = (*dst)[:len(src)]
 	}
 }
 

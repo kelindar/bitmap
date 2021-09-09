@@ -5,6 +5,7 @@ package bitmap
 
 import (
 	"math"
+	"strconv"
 	"testing"
 
 	"github.com/klauspost/cpuid/v2"
@@ -13,21 +14,22 @@ import (
 
 /*
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8         	289575987	         4.122 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/remove-8      	761542122	         1.561 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/contains-8    	908733610	         1.312 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clear-8       	131705713	         9.073 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/ones-8        	40716474	        30.01 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/first-zero-8  	23821670	        50.43 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-8         	420276520	         2.860 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-8         	777923565	         1.542 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-8       	42097286	        27.89 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-to-8    	27890955	        42.65 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clone-8       	75004218	        15.62 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/and-8         	70589480	        17.22 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/andnot-8      	70588650	        17.32 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/or-8          	66248564	        17.33 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/xor-8         	70587819	        17.46 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/set-8         	364901354	         3.317 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/remove-8      	779788404	         1.565 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/contains-8    	899228012	         1.297 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clear-8       	13185654	        89.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/ones-8        	 3392358	       348.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-8         	506871058	         2.443 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-8         	647175536	         1.793 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-zero-8    	497767718	         2.393 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-zero-8    	694824426	         1.761 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-8       	 3389592	       359.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-to-8    	48051702	        25.16 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clone-8       	11868555	        97.79 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/and-8         	 8483682	       140.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/andnot-8      	 8466588	       139.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/or-8          	 9069759	       139.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/xor-8         	 8948078	       139.0 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 100000/64)
@@ -355,4 +357,32 @@ func TestGrow(t *testing.T) {
 	assert.Equal(t, 6, len(bitmap))
 	assert.Equal(t, Bitmap{42, 0, 0, 0, 0, 0}, bitmap)
 	bitmap.Grow(6)
+}
+
+func TestAnd_DifferentBitmapSizes(t *testing.T) {
+	a, b := Bitmap{}, Bitmap{}
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+	}
+
+	for i := uint32(0); i < 200; i += 2 {
+		b.Set(i)
+	}
+
+	a.And(b)
+
+	c, d := Bitmap{}, Bitmap{}
+	for i := uint32(0); i < 100; i += 2 {
+		c.Set(i)
+	}
+	for i := uint32(0); i < 200; i += 2 {
+		d.Set(i)
+	}
+	d.And(c)
+
+	for i := uint32(0); i < 200; i++ {
+		assert.Equal(t, a.Contains(i), d.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	assert.Equal(t, 50, a.Count())
+	assert.Equal(t, 50, d.Count())
 }
