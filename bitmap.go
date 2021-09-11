@@ -117,6 +117,21 @@ func (dst *Bitmap) Grow(desiredBit uint32) {
 	dst.grow(int(desiredBit >> 6))
 }
 
+// balance grows the destination bitmap to match the size of the source bitmap.
+func (dst *Bitmap) balance(src Bitmap) {
+	if len(*dst) == len(src) {
+		return
+	}
+
+	// Grow if necessary
+	if len(*dst) < len(src) {
+		dst.grow(len(src) - 1)
+		return
+	}
+
+	dst.shrink(len(src))
+}
+
 // grow grows the size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
 	// Note that a bitmap is automatically initialized with zeros.
@@ -137,13 +152,15 @@ func (dst *Bitmap) grow(blkAt int) {
 	copy(*dst, old)
 }
 
-// balance grows the destination bitmap to match the size of the source bitmap.
-func (dst *Bitmap) balance(src Bitmap) {
-	if len(*dst) < len(src) {
-		dst.grow(len(src) - 1)
-	} else {
-		*dst = (*dst)[:len(src)]
+// shrink shrinks the size of the bitmap and resets to zero
+func (dst *Bitmap) shrink(length int) {
+	until := len(*dst)
+	for i := length; i < until; i++ {
+		(*dst)[i] = 0
 	}
+
+	// Trim without reallocating
+	*dst = (*dst)[:length]
 }
 
 // capacityFor computes the next power of 2 for a given index

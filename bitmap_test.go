@@ -386,3 +386,23 @@ func TestAnd_DifferentBitmapSizes(t *testing.T) {
 	assert.Equal(t, 50, a.Count())
 	assert.Equal(t, 50, d.Count())
 }
+
+func TestAnd_ConsecutiveAnd_DifferentBitmapSizes(t *testing.T) {
+	var a, b, c Bitmap
+	for i := uint32(0); i < 200; i += 2 {
+		a.Set(i)
+		c.Set(i)
+	}
+
+	for i := uint32(0); i < 100; i += 2 {
+		b.Set(i)
+	}
+
+	a.And(b)
+	a.And(c)
+
+	for i := uint32(0); i < 200; i++ {
+		assert.Equal(t, a.Contains(i), b.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	assert.Equal(t, 50, a.Count())
+}
