@@ -128,8 +128,6 @@ func (dst *Bitmap) balance(src Bitmap) {
 		dst.grow(len(src) - 1)
 		return
 	}
-
-	dst.shrink(len(src))
 }
 
 // grow grows the size of the bitmap until we reach the desired block offset
