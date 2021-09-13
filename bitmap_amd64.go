@@ -14,25 +14,35 @@ var (
 
 // And computes the intersection between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) And(b Bitmap) {
-	if dst.balance(b); len(*dst) >= len(b) {
-		switch avx2 {
-		case true:
-			x64and(*dst, b)
-		default:
-			and(dst, b)
-		}
+	var min int
+	if len(b) >= len(*dst) {
+		min = len(*dst)
+	} else {
+		min = len(b)
+		dst.shrink(min)
+	}
+	switch avx2 {
+	case true:
+		x64and(*dst, b[:min])
+	default:
+		and(dst, b[:min])
 	}
 }
 
-// AndNot computes the difference between two bitmaps and stores the result in the current bitmap
+// AndNot computes the difference between two bitmaps and stores the result in the current bitmap.
+// Operation works as set subtract: dst - b
 func (dst *Bitmap) AndNot(b Bitmap) {
-	if dst.balance(b); len(*dst) >= len(b) {
-		switch avx2 {
-		case true:
-			x64andn(*dst, b)
-		default:
-			andn(dst, b)
-		}
+	var min int
+	if len(b) > len(*dst) {
+		min = len(*dst)
+	} else {
+		min = len(b)
+	}
+	switch avx2 {
+	case true:
+		x64andn(*dst, b[:min])
+	default:
+		andn(dst, b[:min])
 	}
 }
 

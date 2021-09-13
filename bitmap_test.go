@@ -199,6 +199,45 @@ func TestAndNot(t *testing.T) {
 	}
 }
 
+func TestAndNot_TheSameBitmap(t *testing.T) {
+	var a Bitmap
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+	}
+
+	a.AndNot(a)
+
+	for i := uint32(0); i < 100; i++ {
+		assert.Equal(t, false, a.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	assert.Equal(t, 0, a.Count())
+}
+
+func TestAndNot_DifferentBitmapSizes(t *testing.T) {
+	var a, b, c, d Bitmap
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+		c.Set(i)
+	}
+
+	for i := uint32(0); i < 200; i += 2 {
+		b.Set(i)
+		d.Set(i)
+	}
+	a.AndNot(b)
+	d.AndNot(c)
+
+	for i := uint32(0); i < 100; i++ {
+		assert.Equal(t, false, a.Contains(i), "for "+strconv.Itoa(int(i)))
+		assert.Equal(t, false, d.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	for i := uint32(100); i < 200; i++ {
+		assert.Equal(t, b.Contains(i), d.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	assert.Equal(t, 0, a.Count())
+	assert.Equal(t, 50, d.Count())
+}
+
 func TestOr(t *testing.T) {
 	a, b := Bitmap{}, Bitmap{}
 	for i := uint32(0); i < 100; i += 2 {
@@ -212,6 +251,27 @@ func TestOr(t *testing.T) {
 	}
 }
 
+func TestOr_DifferentBitmapSizes(t *testing.T) {
+	var a, b, c, d Bitmap
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+		c.Set(i)
+	}
+
+	for i := uint32(0); i < 200; i += 2 {
+		b.Set(i)
+		d.Set(i)
+	}
+	a.Or(b)
+	d.Or(c)
+
+	for i := uint32(0); i < 200; i++ {
+		assert.Equal(t, d.Contains(i), a.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	assert.Equal(t, 100, a.Count())
+	assert.Equal(t, 100, d.Count())
+}
+
 func TestXor(t *testing.T) {
 	a, b := Bitmap{}, Bitmap{}
 	for i := uint32(0); i < 100; i += 2 {
@@ -223,6 +283,27 @@ func TestXor(t *testing.T) {
 	for i := uint32(0); i < 100; i += 2 {
 		assert.True(t, a.Contains(i))
 	}
+}
+
+func TestXOr_DifferentBitmapSizes(t *testing.T) {
+	var a, b, c, d Bitmap
+	for i := uint32(0); i < 100; i += 2 {
+		a.Set(i)
+		c.Set(i)
+	}
+
+	for i := uint32(0); i < 200; i += 2 {
+		b.Set(i)
+		d.Set(i)
+	}
+	a.Xor(b)
+	d.Xor(c)
+
+	for i := uint32(0); i < 200; i++ {
+		assert.Equal(t, d.Contains(i), a.Contains(i), "for "+strconv.Itoa(int(i)))
+	}
+	assert.Equal(t, 50, a.Count())
+	assert.Equal(t, 50, d.Count())
 }
 
 func TestMin(t *testing.T) {
@@ -360,24 +441,18 @@ func TestGrow(t *testing.T) {
 }
 
 func TestAnd_DifferentBitmapSizes(t *testing.T) {
-	a, b := Bitmap{}, Bitmap{}
+	var a, b, c, d Bitmap
 	for i := uint32(0); i < 100; i += 2 {
 		a.Set(i)
+		c.Set(i)
 	}
 
 	for i := uint32(0); i < 200; i += 2 {
 		b.Set(i)
+		d.Set(i)
 	}
 
 	a.And(b)
-
-	c, d := Bitmap{}, Bitmap{}
-	for i := uint32(0); i < 100; i += 2 {
-		c.Set(i)
-	}
-	for i := uint32(0); i < 200; i += 2 {
-		d.Set(i)
-	}
 	d.And(c)
 
 	for i := uint32(0); i < 200; i++ {
