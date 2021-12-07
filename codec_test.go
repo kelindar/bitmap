@@ -10,6 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func BenchmarkCodec(b *testing.B) {
+	tmp := bytes.NewBuffer(nil)
+	run(b, "write-to", func(index Bitmap) {
+		tmp.Reset()
+		index.WriteTo(tmp)
+	})
+
+	run(b, "read-from", func(index Bitmap) {
+		ReadFrom(tmp)
+	})
+}
+
 func TestSaveLoad(t *testing.T) {
 	m := Bitmap{}
 	for i := 0; i <= 5000; i += 10 {
@@ -27,4 +39,15 @@ func TestSaveLoad(t *testing.T) {
 	out, err := ReadFrom(enc)
 	assert.NoError(t, err)
 	assert.Equal(t, len(m), len(out))
+	assert.Equal(t, m, out)
+}
+
+func TestFromBytes(t *testing.T) {
+	m := Bitmap{}
+	for i := 0; i <= 5000; i += 10 {
+		m.Set(uint32(i))
+	}
+
+	out := FromBytes(m.ToBytes())
+	assert.Equal(t, m, out)
 }

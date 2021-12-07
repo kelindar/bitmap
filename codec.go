@@ -30,28 +30,20 @@ func (dst *Bitmap) ToBytes() (out []byte) {
 }
 
 // ReadFrom reads the bitmap from the reader.
-func ReadFrom(rdr io.Reader) (Bitmap, error) {
-	header := make([]byte, 4)
-	if _, err := io.ReadFull(rdr, header); err != nil {
-		return Bitmap{}, err
-	}
-
-	buffer := make([]byte, binary.BigEndian.Uint32(header[:4]))
-	if _, err := io.ReadFull(rdr, buffer); err != nil {
-		return Bitmap{}, err
-	}
-
-	return FromBytes(buffer), nil
+func ReadFrom(r io.Reader) (Bitmap, error) {
+	var output Bitmap
+	_, err := output.ReadFrom(r)
+	return output, err
 }
 
 // WriteTo writes the bitmap to a specified writer.
 func (dst *Bitmap) WriteTo(w io.Writer) (int64, error) {
 	buffer := dst.ToBytes()
-	header := make([]byte, 4)
 
 	// Write the header into the stream
-	binary.BigEndian.PutUint32(header[0:4], uint32(len(buffer)))
-	n1, err := w.Write(header)
+	var header [4]byte
+	binary.BigEndian.PutUint32(header[:4], uint32(len(buffer)))
+	n1, err := w.Write(header[:4])
 	if err != nil {
 		return int64(n1), err
 	}
@@ -63,6 +55,25 @@ func (dst *Bitmap) WriteTo(w io.Writer) (int64, error) {
 	}
 
 	return int64(n1 + n2), err
+}
+
+// ReadFrom reads data from r until EOF or error. The return value n is the number of
+// bytes read. Any error except EOF encountered during the read is also returned.
+func (dst *Bitmap) ReadFrom(r io.Reader) (int64, error) {
+	var header [4]byte
+	if n, err := io.ReadFull(r, header[:]); err != nil {
+		return int64(n), err
+	}
+
+	// If bitmap is too small, create one of the required size
+	if size := int(binary.BigEndian.Uint32(header[:4])) / 8; size > len(*dst) {
+		*dst = make(Bitmap, size)
+	}
+
+	// Read into the buffer
+	buffer := dst.ToBytes()
+	n, err := io.ReadFull(r, buffer)
+	return int64(n + 4), err
 }
 
 // Clone clones the bitmap. If a destination bitmap is provided, the bitmap will be
