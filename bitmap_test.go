@@ -383,11 +383,11 @@ func TestMaxZero(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	testCount(t, true)
-	testCount(t, false)
+	runTestCount(t, true)
+	runTestCount(t, false)
 }
 
-func testCount(t *testing.T, x64 bool) {
+func runTestCount(t *testing.T, x64 bool) {
 	popc = x64
 	defer func() {
 		popc = cpuid.CPU.Supports(cpuid.POPCNT)
@@ -480,4 +480,18 @@ func TestAnd_ConsecutiveAnd_DifferentBitmapSizes(t *testing.T) {
 		assert.Equal(t, a.Contains(i), b.Contains(i), "for "+strconv.Itoa(int(i)))
 	}
 	assert.Equal(t, 50, a.Count())
+}
+
+func TestResizeBitmap(t *testing.T) {
+	assert.Equal(t, 1, resize(100, 0))
+	assert.Equal(t, 2, resize(100, 1))
+	assert.Equal(t, 4, resize(100, 2))
+	assert.Equal(t, 16, resize(100, 11))
+	assert.Equal(t, 256, resize(100, 255))
+	assert.Equal(t, 1232, resize(100, 1000))
+	assert.Equal(t, 1232, resize(200, 1000))
+	assert.Equal(t, 1232, resize(512, 1000))
+	assert.Equal(t, 1213, resize(500, 1000)) // Inconsistent
+	assert.Equal(t, 22504, resize(512, 20000))
+	assert.Equal(t, 28322, resize(22504, 22600))
 }

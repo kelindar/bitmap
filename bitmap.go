@@ -132,21 +132,18 @@ func (dst *Bitmap) balance(src Bitmap) {
 
 // grow grows the size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
-	// Note that a bitmap is automatically initialized with zeros.
-
-	// If blkAt is no greater that the current length, do nothing.
 	if len(*dst) > blkAt {
 		return
 	}
 
-	// If blkAt is no greater than the current capacity, resize the slice without copying.
+	// If there's space, resize the slice without copying.
 	if cap(*dst) > blkAt {
 		*dst = (*dst)[:blkAt+1]
 		return
 	}
 
 	old := *dst
-	*dst = make(Bitmap, blkAt+1, capacityFor(blkAt+1))
+	*dst = make(Bitmap, blkAt+1, resize(cap(old), blkAt+1))
 	copy(*dst, old)
 }
 
@@ -161,14 +158,25 @@ func (dst *Bitmap) shrink(length int) {
 	*dst = (*dst)[:length]
 }
 
-// capacityFor computes the next power of 2 for a given index
-func capacityFor(v int) int {
-	v--
-	v |= v >> 1
-	v |= v >> 2
-	v |= v >> 4
-	v |= v >> 8
-	v |= v >> 16
-	v++
-	return int(v)
+// resize calculates the new required capacity and a new index
+func resize(capacity, v int) int {
+	const threshold = 256
+	if v < threshold {
+		v |= v >> 1
+		v |= v >> 2
+		v |= v >> 4
+		v |= v >> 8
+		v |= v >> 16
+		v++
+		return int(v)
+	}
+
+	if capacity < threshold {
+		capacity = threshold
+	}
+
+	for 0 < capacity && capacity < (v+1) {
+		capacity += (capacity + 3*threshold) / 4
+	}
+	return capacity
 }
