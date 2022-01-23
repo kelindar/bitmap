@@ -84,13 +84,11 @@ func (dst Bitmap) Clone(into *Bitmap) Bitmap {
 		into = &newm
 	}
 
-	if into.balance(dst); len(*into) < len(dst) {
-		return nil // Elliminate bounds check
-	}
+	max := maxlen(*into, dst, nil)
+	into.grow(max - 1)
 
 	copy(*into, dst)
-	*into = (*into)[:len(dst)]
-	return *into
+	return (*into)[:len(dst)]
 }
 
 // Clear clears the bitmap and resizes it to zero.

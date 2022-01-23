@@ -14,34 +14,54 @@ func count(arr []uint64) int {
 	return sum
 }
 
-// and computes the intersection between two bitmaps and stores the result in the current bitmap
-func and(dst *Bitmap, b Bitmap) {
-	a := *dst
-	for i := 0; i < len(b); i++ {
-		a[i] = a[i] & b[i]
+// and computes the intersection of multiple bitmaps
+func and(a Bitmap, upper int, other Bitmap, extra []Bitmap) {
+	for i := 0; i < upper; i++ {
+		a[i] = a[i] & other[i]
+	}
+
+	for _, b := range extra {
+		for i := 0; i < upper; i++ {
+			a[i] = a[i] & b[i]
+		}
 	}
 }
 
 // AndNot computes the difference between two bitmaps and stores the result in the current bitmap
-func andn(dst *Bitmap, b Bitmap) {
-	a := *dst
-	for i := 0; i < len(b); i++ {
-		a[i] = a[i] &^ b[i]
+func andn(a Bitmap, upper int, other Bitmap, extra []Bitmap) {
+	for i := 0; i < upper; i++ {
+		a[i] = a[i] &^ other[i]
+	}
+
+	for _, b := range extra {
+		for i := 0; i < upper; i++ {
+			a[i] = a[i] &^ b[i]
+		}
 	}
 }
 
 // or computes the union between two bitmaps and stores the result in the current bitmap
-func or(dst *Bitmap, b Bitmap) {
-	a := *dst
-	for i := 0; i < len(b); i++ {
-		a[i] = a[i] | b[i]
+func or(a Bitmap, other Bitmap, extra []Bitmap) {
+	for i := 0; i < len(other); i++ {
+		a[i] = a[i] | other[i]
+	}
+
+	for _, b := range extra {
+		for i := 0; i < len(b); i++ {
+			a[i] = a[i] | b[i]
+		}
 	}
 }
 
 // Xor computes the symmetric difference between two bitmaps and stores the result in the current bitmap
-func xor(dst *Bitmap, b Bitmap) {
-	a := *dst
-	for i := 0; i < len(b); i++ {
-		a[i] = a[i] ^ b[i]
+func xor(a Bitmap, other Bitmap, extra []Bitmap) {
+	for i := 0; i < len(other); i++ {
+		a[i] = a[i] ^ other[i]
+	}
+
+	for _, b := range extra {
+		for i := 0; i < len(b); i++ {
+			a[i] = a[i] ^ b[i]
+		}
 	}
 }

@@ -3,7 +3,7 @@ module github.com/kelindar/bitmap
 go 1.17
 
 require (
-	github.com/klauspost/cpuid/v2 v2.0.6
+	github.com/klauspost/cpuid/v2 v2.0.9
 	github.com/stretchr/testify v1.7.0
 )
 

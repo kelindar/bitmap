@@ -117,19 +117,6 @@ func (dst *Bitmap) Grow(desiredBit uint32) {
 	dst.grow(int(desiredBit >> 6))
 }
 
-// balance grows the destination bitmap to match the size of the source bitmap.
-func (dst *Bitmap) balance(src Bitmap) {
-	if len(*dst) == len(src) {
-		return
-	}
-
-	// Grow if necessary
-	if len(*dst) < len(src) {
-		dst.grow(len(src) - 1)
-		return
-	}
-}
-
 // grow grows the size of the bitmap until we reach the desired block offset
 func (dst *Bitmap) grow(blkAt int) {
 	if len(*dst) > blkAt {
@@ -156,6 +143,38 @@ func (dst *Bitmap) shrink(length int) {
 
 	// Trim without reallocating
 	*dst = (*dst)[:length]
+}
+
+// minlen calculates the minimum length of all of the bitmaps
+func minlen(a, b Bitmap, extra []Bitmap) int {
+	size := min(len(a), len(b))
+	for _, v := range extra {
+		if m := min(len(a), len(v)); m < size {
+			size = m
+		}
+	}
+	return size
+}
+
+// maxlen calculates the maximum length of all of the bitmaps
+func maxlen(a, b Bitmap, extra []Bitmap) int {
+	size := max(len(a), len(b))
+	for _, v := range extra {
+		if m := max(len(a), len(v)); m > size {
+			size = m
+		}
+	}
+	return size
+}
+
+// max returns a maximum of two integers without branches.
+func max(v1, v2 int) int {
+	return v1 - ((v1 - v2) & ((v1 - v2) >> 31))
+}
+
+// min returns a minimum of two integers without branches.
+func min(v1, v2 int) int {
+	return v2 + ((v1 - v2) & ((v1 - v2) >> 31))
 }
 
 // resize calculates the new required capacity and a new index

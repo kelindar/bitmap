@@ -4,6 +4,7 @@
 package bitmap
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"testing"
@@ -14,26 +15,26 @@ import (
 
 /*
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8         	364901354	         3.317 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/remove-8      	779788404	         1.565 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/contains-8    	899228012	         1.297 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clear-8       	13185654	        89.37 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/ones-8        	 3392358	       348.2 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-8         	506871058	         2.443 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-8         	647175536	         1.793 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-zero-8    	497767718	         2.393 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-zero-8    	694824426	         1.761 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-8       	 3389592	       359.4 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-to-8    	48051702	        25.16 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clone-8       	11868555	        97.79 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/and-8         	 8483682	       140.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/andnot-8      	 8466588	       139.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/or-8          	 9069759	       139.4 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/xor-8         	 8948078	       139.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/set-8         	392515898	         3.151 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/remove-8      	777901881	         1.501 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/contains-8    	956935509	         1.274 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clear-8       	  768176	      1484 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/ones-8        	  351216	      3748 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-8         	514317968	         2.319 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-8         	675217926	         1.778 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-zero-8    	513443227	         2.324 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-zero-8    	709863433	         1.800 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-8       	  362536	      3406 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-to-8    	48800028	        25.30 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clone-8       	  503090	      2403 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/and-8         	  374648	      3038 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/andnot-8      	  374656	      3111 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/or-8          	  377270	      3102 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/xor-8         	  394912	      3125 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
-	other := make(Bitmap, 100000/64)
-	other.Set(100000)
+	other := make(Bitmap, 1000000/64)
+	other.Set(1000000)
 
 	run(b, "set", func(index Bitmap) {
 		index.Set(5000)
@@ -79,7 +80,7 @@ func BenchmarkBitmap(b *testing.B) {
 		index.CountTo(5001)
 	})
 
-	var into Bitmap
+	into := make(Bitmap, len(other))
 	run(b, "clone", func(index Bitmap) {
 		index.Clone(&into)
 	})
@@ -100,6 +101,27 @@ func BenchmarkBitmap(b *testing.B) {
 		index.AndNot(other)
 	})
 
+}
+
+/*
+cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
+BenchmarkMany/and4-naive-8         	  100153	     12324 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMany/and4-many-8          	  139195	      8709 ns/op	       0 B/op	       0 allocs/op
+*/
+func BenchmarkMany(b *testing.B) {
+	other := make(Bitmap, 1000000/64)
+	other.Set(1000000)
+
+	run(b, "and4-naive", func(index Bitmap) {
+		index.And(other)
+		index.And(other)
+		index.And(other)
+		index.And(other)
+	})
+
+	run(b, "and4-batch", func(index Bitmap) {
+		index.And(other, other, other, other)
+	})
 }
 
 func TestSetRemove(t *testing.T) {
@@ -494,4 +516,89 @@ func TestResizeBitmap(t *testing.T) {
 	assert.Equal(t, 1213, resize(500, 1000)) // Inconsistent
 	assert.Equal(t, 22504, resize(512, 20000))
 	assert.Equal(t, 28322, resize(22504, 22600))
+}
+
+func TestMinInteger(t *testing.T) {
+	tests := [][3]int{
+		{10, 20, 10},
+		{20, 10, 10},
+		{0, 10, 0},
+		{10, 0, 0},
+		{10, 10, 10},
+		{10, -10, -10},
+		{-10, 10, -10},
+		{-10, 0, -10},
+		{-10, -10, -10},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc[2], min(tc[0], tc[1]), fmt.Sprintf("min(%v, %v)", tc[0], tc[1]))
+	}
+}
+
+func TestMaxInteger(t *testing.T) {
+	tests := [][3]int{
+		{10, 20, 20},
+		{20, 10, 20},
+		{0, 10, 10},
+		{10, 0, 10},
+		{10, 10, 10},
+		{10, -10, 10},
+		{-10, 10, 10},
+		{-10, 0, 0},
+		{-10, -10, -10},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc[2], max(tc[0], tc[1]), fmt.Sprintf("max(%v, %v)", tc[0], tc[1]))
+	}
+}
+
+func TestBatched(t *testing.T) {
+	const bits = 0b0011
+
+	// Functions to test
+	tests := []func(Bitmap) func(Bitmap, ...Bitmap){
+		func(b Bitmap) func(Bitmap, ...Bitmap) {
+			return b.And
+		},
+		func(b Bitmap) func(Bitmap, ...Bitmap) {
+			return b.AndNot
+		},
+		func(b Bitmap) func(Bitmap, ...Bitmap) {
+			return b.Or
+		},
+		func(b Bitmap) func(Bitmap, ...Bitmap) {
+			return b.Xor
+		},
+	}
+
+	for _, withAvx := range []bool{true, false} {
+		for i, tc := range tests {
+			t.Run(fmt.Sprintf("%v,avx=%v", i, withAvx), func(t *testing.T) {
+				avx2 = withAvx
+				naive := func(n int) Bitmap {
+					input := Bitmap{bits}
+					tc(input)(Bitmap{bits})
+					for i := 0; i < n; i++ {
+						tc(input)(Bitmap{bits})
+					}
+					return input
+				}
+
+				for n := 0; n < 5; n++ {
+					input := Bitmap{bits}
+					other := Bitmap{bits}
+
+					extra := make([]Bitmap, 0, n)
+					for i := 0; i < n; i++ {
+						extra = append(extra, Bitmap{bits})
+					}
+
+					tc(input)(other, extra...)
+					assert.Equal(t, naive(n), input)
+				}
+			})
+		}
+	}
 }

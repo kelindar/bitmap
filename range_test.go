@@ -93,7 +93,7 @@ func TestRangeIndex(t *testing.T) {
 
 // run runs a benchmark
 func run(b *testing.B, name string, f func(index Bitmap)) {
-	count := 100000
+	count := 1000000
 	b.Run(name, func(b *testing.B) {
 		index := make(Bitmap, count/64)
 		index.Grow(uint32(count))
