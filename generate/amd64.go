@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 // Initial code adapted from Marko Kevac (see https://github.com/mkevac/gopherconrussia2019)
 
+//go:build ignore
 // +build ignore
 
 package main
@@ -9,12 +10,20 @@ package main
 //go:generate go run amd64.go -out ../simd_amd64.s -stubs ../simd_amd64.go -pkg=bitmap
 
 import (
+	"fmt"
 	"strings"
 
 	. "github.com/mmcloughlin/avo/build"
 	"github.com/mmcloughlin/avo/buildtags"
 	. "github.com/mmcloughlin/avo/operand"
 	. "github.com/mmcloughlin/avo/reg"
+)
+
+const (
+	opAnd  = "and"
+	opAndn = "andn"
+	opOr   = "or"
+	opXor  = "xor"
 )
 
 func main() {
@@ -28,10 +37,12 @@ func main() {
 	makeCount()
 
 	// Generate boolean algebra
-	makeOp("and")
-	makeOp("andnot")
-	makeOp("or")
-	makeOp("xor")
+	for i := 1; i <= 4; i++ {
+		makeOpN(opAnd, i)
+		makeOpN(opAndn, i)
+		makeOpN(opOr, i)
+		makeOpN(opXor, i)
+	}
 
 	Generate()
 }
@@ -101,27 +112,23 @@ func makeCount() {
 	RET()
 }
 
-// makeOp generates an SIMD "and", "or" , "andnot", "xor" operations.
-func makeOp(op string) {
-	switch op {
-	case "and":
-		TEXT("x64and", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("x64and (AND) computes the intersection between two slices and stores the result in the first one")
-	case "or":
-		TEXT("x64or", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("x64or (OR) computes the union between two slices and stores the result in the first one")
-	case "andnot":
-		TEXT("x64andn", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("x64andn (AND NOT) computes the difference between two slices and stores the result in the first one")
-	case "xor":
-		TEXT("x64xor", NOSPLIT, "func(a []uint64, b []uint64)")
-		Doc("x64xor (XOR) computes the symmetric difference between two slices and stores the result in the first one")
+// makeOpN generates an SIMD "and", "or" , "andnot", "xor" operations.
+func makeOpN(op string, param int) {
+	names := []string{}
+	for i := 0; i <= param; i++ {
+		names = append(names, nameOf(i))
 	}
+
+	TEXT(fmt.Sprintf("x64%v%d", op, param), NOSPLIT,
+		fmt.Sprintf("func (%v []uint64)", strings.Join(names, ", ")))
+	// Doc(name + " (AND) computes the intersection between two slices and stores the result in the first one")
 
 	// Load the a and b addresses as well as the current len(a). Assume len(a) == len(b)
 	Pragma("noescape")
-	a := Mem{Base: Load(Param("a").Base(), GP64())}
-	b := Mem{Base: Load(Param("b").Base(), GP64())}
+	ptr := []Mem{}
+	for i := 0; i <= param; i++ {
+		ptr = append(ptr, Mem{Base: Load(Param(nameOf(i)).Base(), GP64())})
+	}
 	n := Load(Param("b").Len(), GP64())
 
 	// The register for the tail, we xor it with itself to zero out
@@ -144,33 +151,36 @@ func makeOp(op string) {
 
 	// Move memory vector into position
 	Commentf("perform the logical \"%v\" operation", strings.ToUpper(op))
-	for i := 0; i < unroll; i++ {
-		VMOVUPD(b.Offset(size*i), vector[i])
-	}
-
-	// Perform the actual operation
-	for i := 0; i < unroll; i++ {
-		switch op {
-		case "and":
-			VPAND(a.Offset(size*i), vector[i], vector[i])
-		case "or":
-			VPOR(a.Offset(size*i), vector[i], vector[i])
-		case "andnot":
-			VPANDN(a.Offset(size*i), vector[i], vector[i])
-		case "xor":
-			VPXOR(a.Offset(size*i), vector[i], vector[i])
+	for i := 1; i <= param; i++ {
+		for r := 0; r < unroll; r++ {
+			VMOVUPD(ptr[i].Offset(size*r), vector[r])
 		}
-	}
 
-	// Move the result to "a" by copying the vector
-	for i := 0; i < unroll; i++ {
-		VMOVUPD(vector[i], a.Offset(size*i))
+		// Perform the actual operation
+		for r := 0; r < unroll; r++ {
+			switch op {
+			case opAnd:
+				VPAND(ptr[0].Offset(size*r), vector[r], vector[r])
+			case opOr:
+				VPOR(ptr[0].Offset(size*r), vector[r], vector[r])
+			case opAndn:
+				VPANDN(ptr[0].Offset(size*r), vector[r], vector[r])
+			case opXor:
+				VPXOR(ptr[0].Offset(size*r), vector[r], vector[r])
+			}
+		}
+
+		// Move the result to "a" by copying the vector
+		for r := 0; r < unroll; r++ {
+			VMOVUPD(vector[r], ptr[0].Offset(size*r))
+		}
 	}
 
 	// Continue the iteration
 	Comment("continue the interation by moving read pointers")
-	ADDQ(U32(blocksize), a.Base)
-	ADDQ(U32(blocksize), b.Base)
+	for i := 0; i <= param; i++ {
+		ADDQ(U32(blocksize), ptr[i].Base)
+	}
 	SUBQ(U32(4*unroll), n)
 	JMP(LabelRef("body"))
 
@@ -181,26 +191,33 @@ func makeOp(op string) {
 
 	// Perform the actual operation
 	Commentf("perform the logical \"%v\" operation", strings.ToUpper(op))
-	MOVQ(Mem{Base: b.Base}, s)
-	switch op {
-	case "and":
-		ANDQ(Mem{Base: a.Base}, s)
-	case "or":
-		ORQ(Mem{Base: a.Base}, s)
-	case "andnot":
-		ANDNQ(Mem{Base: a.Base}, s, s)
-	case "xor":
-		XORQ(Mem{Base: a.Base}, s)
+	for i := 1; i <= param; i++ {
+		MOVQ(Mem{Base: ptr[i].Base}, s)
+		switch op {
+		case opAnd:
+			ANDQ(Mem{Base: ptr[0].Base}, s)
+		case opOr:
+			ORQ(Mem{Base: ptr[0].Base}, s)
+		case opAndn:
+			ANDNQ(Mem{Base: ptr[0].Base}, s, s)
+		case opXor:
+			XORQ(Mem{Base: ptr[0].Base}, s)
+		}
+		MOVQ(s, Mem{Base: ptr[0].Base})
 	}
-	MOVQ(s, Mem{Base: a.Base})
 
 	// Continue the iteration
 	Comment("continue the interation by moving read pointers")
-	ADDQ(U32(8), a.Base)
-	ADDQ(U32(8), b.Base)
+	for i := 0; i <= param; i++ {
+		ADDQ(U32(8), ptr[i].Base)
+	}
 	SUBQ(U32(1), n)
 	JMP(LabelRef("tail"))
 
 	Label("done")
 	RET()
+}
+
+func nameOf(i int) string {
+	return string(byte(0x61 + i))
 }
