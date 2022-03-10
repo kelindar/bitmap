@@ -5,6 +5,7 @@ package bitmap
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"reflect"
 	"unsafe"
@@ -12,6 +13,13 @@ import (
 
 // FromBytes reads a bitmap from a byte buffer without copying the buffer.
 func FromBytes(buffer []byte) (out Bitmap) {
+	switch {
+	case len(buffer) == 0:
+		return nil
+	case len(buffer)%8 != 0:
+		panic(fmt.Sprintf("bitmap: buffer length expected to be multiple of 8, was %d", len(buffer)))
+	}
+
 	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&out))
 	hdr.Len = len(buffer) >> 3
 	hdr.Cap = hdr.Len
@@ -22,6 +30,10 @@ func FromBytes(buffer []byte) (out Bitmap) {
 // ToBytes converts the bitmap to binary representation without copying the underlying
 // data. The output buffer should not be modified, since it would also change the bitmap.
 func (dst *Bitmap) ToBytes() (out []byte) {
+	if len(*dst) == 0 {
+		return nil
+	}
+
 	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&out))
 	hdr.Len = len(*dst) * 8
 	hdr.Cap = hdr.Len

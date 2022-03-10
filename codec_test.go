@@ -51,3 +51,23 @@ func TestFromBytes(t *testing.T) {
 	out := FromBytes(m.ToBytes())
 	assert.Equal(t, m, out)
 }
+
+func TestFromBytesNil(t *testing.T) {
+	out := FromBytes(nil)
+	assert.Nil(t, out)
+}
+
+func TestFromBytesInvalid(t *testing.T) {
+	m := make([]byte, 10)
+	for i := 1; i < 8; i++ {
+		assert.Panics(t, func() {
+			FromBytes(m[:i])
+		})
+	}
+}
+
+func TestToBytesNil(t *testing.T) {
+	var m Bitmap
+	out := m.ToBytes()
+	assert.Nil(t, out)
+}
