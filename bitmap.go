@@ -4,6 +4,7 @@
 package bitmap
 
 import (
+	"encoding/json"
 	"math/bits"
 )
 
@@ -40,7 +41,7 @@ func (dst Bitmap) Contains(x uint32) bool {
 	return (dst[blkAt] & (1 << bitAt)) > 0
 }
 
-// Ones sets the entire bitmap to one
+// Ones sets the entire bitmap to one.
 func (dst Bitmap) Ones() {
 	for i := 0; i < len(dst); i++ {
 		dst[i] = 0xffffffffffffffff
@@ -198,4 +199,18 @@ func resize(capacity, v int) int {
 		capacity += (capacity + 3*threshold) / 4
 	}
 	return capacity
+}
+
+func (dst Bitmap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(dst.ToBytes())
+}
+
+func (dst *Bitmap) UnmarshalJSON(data []byte) (err error) {
+	d := []byte{}
+	if err := json.Unmarshal(data, &d); err != nil {
+		return err
+	}
+
+	*dst = FromBytes(d)
+	return nil
 }
