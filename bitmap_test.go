@@ -621,4 +621,7 @@ func TestJSON(t *testing.T) {
 
 	assert.NoError(t, json.Unmarshal(data, &newMp))
 	assert.EqualValues(t, newMp, mp)
+
+	corrupted := append(data, 1)
+	assert.Error(t, mp.UnmarshalJSON(corrupted))
 }
