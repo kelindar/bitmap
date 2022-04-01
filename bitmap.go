@@ -201,12 +201,14 @@ func resize(capacity, v int) int {
 	return capacity
 }
 
+// MarshalJSON returns encoded string representation for the bitmap
 func (dst Bitmap) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dst.ToBytes())
 }
 
+// UnmarshalJSON decodes the received bytes and loads it to bitmap object
 func (dst *Bitmap) UnmarshalJSON(data []byte) (err error) {
-	d := []byte{}
+	d := make([]byte, len(data))
 	if err := json.Unmarshal(data, &d); err != nil {
 		return err
 	}
