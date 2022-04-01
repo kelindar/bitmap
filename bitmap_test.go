@@ -4,8 +4,10 @@
 package bitmap
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
+	"math/rand"
 	"strconv"
 	"testing"
 
@@ -601,4 +603,25 @@ func TestBatched(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestJSON(t *testing.T) {
+	mp := Bitmap{}
+
+	for i := 0; i <= 100; i += 2 {
+		if rand.Intn(2) == 1 {
+			mp.Set(uint32(i))
+		}
+	}
+
+	newMp := Bitmap{}
+
+	data, err := json.Marshal(mp)
+	assert.NoError(t, err)
+
+	assert.NoError(t, json.Unmarshal(data, &newMp))
+	assert.EqualValues(t, newMp, mp)
+
+	corrupted := append(data, 1)
+	assert.Error(t, mp.UnmarshalJSON(corrupted))
 }
