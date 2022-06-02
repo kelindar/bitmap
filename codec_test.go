@@ -80,4 +80,11 @@ func TestFromHex(t *testing.T) {
 	bm, err = FromHex("000000000000000000000000000000000001")
 	assert.NoError(t, err)
 	assert.Equal(t, Bitmap{1, 0, 0}, bm)
+
+	_, err = FromHex("Not Valid")
+	assert.Error(t, err)
+
+	bm, err = FromHex("")
+	assert.NoError(t, err)
+	assert.Nil(t, bm)
 }

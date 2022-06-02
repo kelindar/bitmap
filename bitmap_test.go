@@ -618,4 +618,10 @@ func TestJSON(t *testing.T) {
 	newMp := Bitmap{}
 	assert.NoError(t, json.Unmarshal(data, &newMp))
 	assert.Equal(t, mp, newMp)
+
+	assert.NoError(t, mp.UnmarshalJSON(nil))
+	assert.Empty(t, mp)
+
+	assert.Error(t, mp.UnmarshalJSON([]byte("\"notvalid")))
+	assert.Error(t, mp.UnmarshalJSON([]byte("\"Z\"")))
 }

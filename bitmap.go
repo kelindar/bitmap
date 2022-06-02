@@ -219,6 +219,11 @@ func (dst Bitmap) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON decodes the received bytes and loads it to bitmap object
 func (dst *Bitmap) UnmarshalJSON(data []byte) (err error) {
 	var str string
+	if data == nil {
+		*dst = make(Bitmap, 0)
+		return
+	}
+
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
 	}
