@@ -608,20 +608,14 @@ func TestBatched(t *testing.T) {
 func TestJSON(t *testing.T) {
 	mp := Bitmap{}
 
-	for i := 0; i <= 100; i += 2 {
-		if rand.Intn(2) == 1 {
-			mp.Set(uint32(i))
-		}
+	for i := 0; i < 1000; i++ {
+		mp.Set(uint32(rand.Intn(10000)))
 	}
-
-	newMp := Bitmap{}
 
 	data, err := json.Marshal(mp)
 	assert.NoError(t, err)
 
+	newMp := Bitmap{}
 	assert.NoError(t, json.Unmarshal(data, &newMp))
-	assert.EqualValues(t, newMp, mp)
-
-	corrupted := append(data, 1)
-	assert.Error(t, mp.UnmarshalJSON(corrupted))
+	assert.Equal(t, mp, newMp)
 }

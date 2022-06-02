@@ -5,6 +5,7 @@ package bitmap
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"reflect"
@@ -39,6 +40,28 @@ func (dst *Bitmap) ToBytes() (out []byte) {
 	hdr.Cap = hdr.Len
 	hdr.Data = uintptr(unsafe.Pointer(&(*dst)[0]))
 	return out
+}
+
+// FromHex reads a hexadecimal string and converts it to bitmap, character at index 0 is the most significant
+func FromHex(hexString string) (Bitmap, error) {
+	bytes, err := hex.DecodeString(hexString)
+
+	switch {
+	case err != nil:
+		return nil, err
+	case len(bytes) == 0:
+		return nil, nil
+	}
+
+	// reverse bytes to maintain bytes significance order (least significant = hexString tail = list head)
+	for l, r := 0, len(bytes)-1; l < r; l, r = l+1, r-1 {
+		bytes[l], bytes[r] = bytes[r], bytes[l]
+	}
+
+	for len(bytes)%8 != 0 {
+		bytes = append(bytes, 0)
+	}
+	return FromBytes(bytes), nil
 }
 
 // ReadFrom reads the bitmap from the reader.

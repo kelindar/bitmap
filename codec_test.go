@@ -71,3 +71,13 @@ func TestToBytesNil(t *testing.T) {
 	out := m.ToBytes()
 	assert.Nil(t, out)
 }
+
+func TestFromHex(t *testing.T) {
+	bm, err := FromHex("FFA001")
+	assert.NoError(t, err)
+	assert.Equal(t, Bitmap{0xFFA001}, bm)
+
+	bm, err = FromHex("000000000000000000000000000000000001")
+	assert.NoError(t, err)
+	assert.Equal(t, Bitmap{1, 0, 0}, bm)
+}

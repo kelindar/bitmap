@@ -5,7 +5,9 @@ package bitmap
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/bits"
+	"strings"
 )
 
 // Bitmap represents a scalar-backed bitmap index
@@ -203,16 +205,30 @@ func resize(capacity, v int) int {
 
 // MarshalJSON returns encoded string representation for the bitmap
 func (dst Bitmap) MarshalJSON() ([]byte, error) {
-	return json.Marshal(dst.ToBytes())
+	size := len(dst)
+	vals := make([]string, size)
+
+	for i, x := range dst {
+		// convert each uint64 into 16 * 4-bit hexadecimal character
+		vals[size-i-1] = fmt.Sprintf("%.16X", x)
+	}
+
+	return json.Marshal(strings.Join(vals, ""))
 }
 
 // UnmarshalJSON decodes the received bytes and loads it to bitmap object
 func (dst *Bitmap) UnmarshalJSON(data []byte) (err error) {
-	d := make([]byte, len(data))
-	if err := json.Unmarshal(data, &d); err != nil {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
 		return err
 	}
 
-	*dst = FromBytes(d)
+	mp, err := FromHex(str)
+	if err != nil {
+		return err
+	}
+
+	*dst = mp
 	return nil
+
 }
