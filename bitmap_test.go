@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/klauspost/cpuid/v2"
@@ -624,4 +625,54 @@ func TestJSON(t *testing.T) {
 
 	assert.Error(t, mp.UnmarshalJSON([]byte("\"notvalid")))
 	assert.Error(t, mp.UnmarshalJSON([]byte("\"Z\"")))
+}
+
+func TestToHexadecimal(t *testing.T) {
+	type Case struct {
+		Input  uint64
+		Pad    bool
+		Output string
+	}
+	tests := []Case{{
+		Input:  0,
+		Pad:    false,
+		Output: "0",
+	}, {
+		Input:  42,
+		Pad:    false,
+		Output: "2A",
+	}, {
+		Input:  math.MaxUint64,
+		Pad:    false,
+		Output: "FFFFFFFFFFFFFFFF",
+	}, {
+		Input:  15,
+		Pad:    true,
+		Output: "000000000000000F",
+	},
+	}
+
+	for _, tc := range tests {
+		sb := strings.Builder{}
+		writeHexdecimal(&sb, tc.Input, tc.Pad)
+		assert.Equal(t, tc.Output, sb.String())
+	}
+
+}
+
+func TestFromHex(t *testing.T) {
+	bm, err := fromHex("FFA001")
+	assert.NoError(t, err)
+	assert.Equal(t, Bitmap{0xFFA001}, bm)
+
+	bm, err = fromHex("000000000000000000000000000000000001")
+	assert.NoError(t, err)
+	assert.Equal(t, Bitmap{1, 0, 0}, bm)
+
+	_, err = fromHex("Not Valid")
+	assert.Error(t, err)
+
+	bm, err = fromHex("")
+	assert.NoError(t, err)
+	assert.Nil(t, bm)
 }
