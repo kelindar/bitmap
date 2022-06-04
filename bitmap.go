@@ -4,11 +4,7 @@
 package bitmap
 
 import (
-	"encoding/hex"
-	"encoding/json"
 	"math/bits"
-	"strconv"
-	"strings"
 )
 
 // Bitmap represents a scalar-backed bitmap index
@@ -202,79 +198,4 @@ func resize(capacity, v int) int {
 		capacity += (capacity + 3*threshold) / 4
 	}
 	return capacity
-}
-
-// MarshalJSON returns encoded string representation for the bitmap
-func (dst Bitmap) MarshalJSON() ([]byte, error) {
-	var sb strings.Builder
-	for i := len(dst) - 1; i >= 0; i-- {
-		// convert each uint64 into 16 * 4-bit hexadecimal character
-		writeHexdecimal(&sb, dst[i], true)
-	}
-
-	return json.Marshal(sb.String())
-}
-
-// writeHexdecimal write the hexdecimal representation for given value in buffer
-func writeHexdecimal(sb *strings.Builder, value uint64, pad bool) {
-	maxLen := 16 // 64 bits / 4
-
-	hexadecimal := strings.ToUpper(strconv.FormatUint(value, 16))
-	hexaLen := len(hexadecimal)
-
-	if !pad || hexaLen == maxLen {
-		sb.WriteString(hexadecimal)
-		return
-	}
-
-	// Add padding
-	for i := hexaLen; i < maxLen; i++ {
-		sb.WriteString("0")
-	}
-
-	sb.WriteString(hexadecimal)
-}
-
-// UnmarshalJSON decodes the received bytes and loads it to bitmap object
-func (dst *Bitmap) UnmarshalJSON(data []byte) (err error) {
-	var str string
-	if data == nil {
-		*dst = make(Bitmap, 0)
-		return
-	}
-
-	if err := json.Unmarshal(data, &str); err != nil {
-		return err
-	}
-
-	mp, err := fromHex(str)
-	if err != nil {
-		return err
-	}
-
-	*dst = mp
-	return nil
-
-}
-
-// fromHex reads a hexadecimal string and converts it to bitmap, character at index 0 is the most significant
-func fromHex(hexString string) (Bitmap, error) {
-	bytes, err := hex.DecodeString(hexString)
-
-	switch {
-	case err != nil:
-		return nil, err
-	case len(bytes) == 0:
-		return nil, nil
-	}
-
-	// reverse bytes to maintain bytes significance order (least significant = hexString tail = list head)
-	for l, r := 0, len(bytes)-1; l < r; l, r = l+1, r-1 {
-		bytes[l], bytes[r] = bytes[r], bytes[l]
-	}
-
-	for len(bytes)%8 != 0 {
-		bytes = append(bytes, 0)
-	}
-	return FromBytes(bytes), nil
 }

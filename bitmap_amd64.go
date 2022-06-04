@@ -9,7 +9,6 @@ import (
 
 var (
 	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
-	popc = cpuid.CPU.Supports(cpuid.POPCNT)
 )
 
 // And computes the intersection between two bitmaps and stores the result in the current bitmap
@@ -124,8 +123,10 @@ func (dst *Bitmap) Xor(other Bitmap, extra ...Bitmap) {
 
 // Count returns the number of elements in this bitmap
 func (dst Bitmap) Count() int {
-	if popc {
-		return int(x64count(dst))
+	switch avx2 {
+	case true:
+		return x64count_avx2(dst)
+	default:
+		return count(dst)
 	}
-	return count(dst)
 }
