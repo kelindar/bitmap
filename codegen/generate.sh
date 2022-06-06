@@ -1,26 +1,24 @@
 #!/bin/bash
 
 PATH="$PATH:./bin"
+CLANG_OPTS="-mno-red-zone -mstackrealign -mllvm -inline-threshold=1000 -fno-asynchronous-unwind-tables -fno-exceptions -fno-rtti -ffast-math -O1"
 
 # Generates AMD64 
-function build_amd64 {
-    ASM_FILE=$(basename -- ${FILE%.cpp}.s)
-
-    clang -S -Ofast -mavx2 -fno-exceptions -fno-rtti -masm=intel -fno-asynchronous-unwind-tables -mstackrealign -o $ASM_FILE  $FILE
-    c2goasm -a -f $ASM_FILE ../$ASM_FILE
-    rm $ASM_FILE
+function build_avx2_amd64 {
+    SRC="bitmap_avx2_amd64.cpp"
+    ASM="bitmap_avx2_amd64.s"
+    clang-14 -S -mavx2 -masm=intel $CLANG_OPTS -o $ASM $SRC
+    c2goasm -a -f $ASM ../$ASM
+    rm $ASM
 }
 
 # Generates ARM64 (untested)
-function build_arm64 {
-    ASM_FILE=$(basename -- ${FILE%.cpp}.s)
-
-    clang -c -Ofast -arch arm64 -march=armv8+sve -fno-exceptions -fno-rtti -fno-asynchronous-unwind-tables -mstackrealign -o $ASM_FILE $FILE
-    c2goasm -a -f $ASM_FILE ../$ASM_FILE
-    rm $ASM_FILE
+function build_neon_arm64 {
+    SRC="bitmap_neon_arm64.cpp"
+    ASM="bitmap_neon_arm64.s"
+    clang-14 -S -arch arm64 $CLANG_OPTS -o $ASM $SRC
+    c2goasm -a -f $ASM ../$ASM
+    rm $ASM
 }
 
-# iterate over all source files and generate
-for FILE in amd64/*.cpp; do
-    build_amd64 $FILE...
-done
+build_avx2_amd64

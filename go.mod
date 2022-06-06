@@ -1,8 +1,9 @@
 module github.com/kelindar/bitmap
 
-go 1.17
+go 1.18
 
 require (
+	github.com/kelindar/simd v1.1.2
 	github.com/klauspost/cpuid/v2 v2.0.12
 	github.com/stretchr/testify v1.7.1
 )

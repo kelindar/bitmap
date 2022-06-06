@@ -8,8 +8,8 @@ import (
 
 /*
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkRange/range-8         	   15823	     75607 ns/op	       0 B/op	       0 allocs/op
-BenchmarkRange/filter-8        	   20366	     59646 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRange/range-8         	    1756	    678070 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRange/filter-8        	    2104	    539290 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkRange(b *testing.B) {
 	var i uint32
@@ -27,6 +27,42 @@ func BenchmarkRange(b *testing.B) {
 	})
 
 	_ = i
+}
+
+/*
+cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
+BenchmarkAggregate/sum-8         	    1791	    678383 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAggregate/sum-full-8    	    7058	    160180 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAggregate/min-8         	    1297	    869608 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAggregate/min-full-8    	    2766	    427721 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAggregate/max-8         	    1455	    885826 ns/op	       0 B/op	       0 allocs/op
+BenchmarkAggregate/max-full-8    	    3025	    433461 ns/op	       0 B/op	       0 allocs/op
+*/
+func BenchmarkAggregate(b *testing.B) {
+	target := make([]float32, 1000100)
+	run(b, "sum", func(index Bitmap) {
+		Sum(target, index)
+	})
+
+	runFull(b, "sum-full", func(index Bitmap) {
+		Sum(target, index)
+	})
+
+	run(b, "min", func(index Bitmap) {
+		Min(target, index)
+	})
+
+	runFull(b, "min-full", func(index Bitmap) {
+		Min(target, index)
+	})
+
+	run(b, "max", func(index Bitmap) {
+		Max(target, index)
+	})
+
+	runFull(b, "max-full", func(index Bitmap) {
+		Max(target, index)
+	})
 }
 
 func TestFilter(t *testing.T) {
@@ -99,6 +135,23 @@ func run(b *testing.B, name string, f func(index Bitmap)) {
 		index.Grow(uint32(count))
 		for i := 0; i < len(index); i++ {
 			index[i] = 0xf0f0f0f0f0f0f0f0
+		}
+
+		b.ReportAllocs()
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			f(index)
+		}
+	})
+}
+
+func runFull(b *testing.B, name string, f func(index Bitmap)) {
+	count := 1000000
+	b.Run(name, func(b *testing.B) {
+		index := make(Bitmap, count/64)
+		index.Grow(uint32(count))
+		for i := 0; i < len(index); i++ {
+			index[i] = 0xffffffffffffffff
 		}
 
 		b.ReportAllocs()
