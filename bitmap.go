@@ -5,6 +5,12 @@ package bitmap
 
 import (
 	"math/bits"
+
+	"github.com/klauspost/cpuid/v2"
+)
+
+var (
+	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
 )
 
 // Bitmap represents a scalar-backed bitmap index

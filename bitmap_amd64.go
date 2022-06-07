@@ -1,15 +1,10 @@
 // Copyright (c) Roman Atachiants and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
+//go:build amd64
+// +build amd64
+
 package bitmap
-
-import (
-	"github.com/klauspost/cpuid/v2"
-)
-
-var (
-	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
-)
 
 // And computes the intersection between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) And(other Bitmap, extra ...Bitmap) {
