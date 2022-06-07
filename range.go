@@ -142,7 +142,7 @@ func (dst *Bitmap) Filter(f func(x uint32) bool) {
 func Sum[T simd.Number](src []T, index Bitmap) (sum T) {
 	var frame [64]T
 	chunks := min(len(src)/64, len(index))
-	for blkAt := 0; blkAt < chunks-1; blkAt++ {
+	for blkAt := 0; blkAt < chunks; blkAt++ {
 		blk := (index)[blkAt]
 		idx := int(blkAt << 6)
 		switch blk {
@@ -164,38 +164,49 @@ func Sum[T simd.Number](src []T, index Bitmap) (sum T) {
 }
 
 // Min finds the smallest value in a slice, filtered by the provided bitmap
-func Min[T simd.Number](src []T, index Bitmap) (min T) {
+func Min[T simd.Number](src []T, index Bitmap) (out T, ok bool) {
+	if len(src) == 0 || index.Count() == 0 {
+		return 0, false
+	}
+
 	var frame [64]T
-	chunks := len(src) / 64
+	chunks := min(len(src)/64, len(index))
+	out = src[0]
 	for blkAt := 0; blkAt < chunks; blkAt++ {
 		blk := (index)[blkAt]
 		idx := int(blkAt << 6)
 		switch blk {
 		case 0x0:
 		case 0xffffffffffffffff:
-			if v := simd.Min(src[idx : idx+64]); v < min {
-				min = v
+			if v := simd.Min(src[idx : idx+64]); v < out {
+				out = v
 			}
 		default:
-			if v := simd.Min(leftPack(frame[:], src[idx:idx+64], (index)[blkAt])); v < min {
-				min = v
+			if v := simd.Min(leftPack(frame[:], src[idx:idx+64], (index)[blkAt])); v < out {
+				out = v
 			}
 		}
 	}
 
 	// Process the tail
 	for i := chunks * 64; i < len(src); i++ {
-		if index.Contains(uint32(i)) && src[i] < min {
-			min = src[i]
+		if index.Contains(uint32(i)) && src[i] < out {
+			out = src[i]
 		}
 	}
-	return min
+	return out, true
 }
 
 // Max finds the largest value in a slice, filtered by the provided bitmap
-func Max[T simd.Number](src []T, index Bitmap) (max T) {
+func Max[T simd.Number](src []T, index Bitmap) (out T, ok bool) {
+	if len(src) == 0 || index.Count() == 0 {
+		return 0, false
+	}
+
 	var frame [64]T
-	chunks := len(src) / 64
+	chunks := min(len(src)/64, len(index))
+	out = src[0]
+
 	for blkAt := 0; blkAt < chunks; blkAt++ {
 		blk := (index)[blkAt]
 		offset := int(blkAt << 6)
@@ -203,23 +214,23 @@ func Max[T simd.Number](src []T, index Bitmap) (max T) {
 		switch blk {
 		case 0x0:
 		case 0xffffffffffffffff:
-			if v := simd.Max(src[offset : offset+64]); v > max {
-				max = v
+			if v := simd.Max(src[offset : offset+64]); v > out {
+				out = v
 			}
 		default:
-			if v := simd.Max(leftPack(frame[:], src[offset:offset+64], (index)[blkAt])); v > max {
-				max = v
+			if v := simd.Max(leftPack(frame[:], src[offset:offset+64], (index)[blkAt])); v > out {
+				out = v
 			}
 		}
 	}
 
 	// Process the tail
 	for i := chunks * 64; i < len(src); i++ {
-		if index.Contains(uint32(i)) && src[i] > max {
-			max = src[i]
+		if index.Contains(uint32(i)) && src[i] > out {
+			out = src[i]
 		}
 	}
-	return max
+	return out, true
 }
 
 // leftPack left-packs a src slice into a dst for a single block blk
