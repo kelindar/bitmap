@@ -14,22 +14,22 @@ import (
 
 /*
 cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8         	392515898	         3.151 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/remove-8      	777901881	         1.501 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/contains-8    	956935509	         1.274 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clear-8       	  768176	      1484 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/ones-8        	  351216	      3748 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-8         	514317968	         2.319 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-8         	675217926	         1.778 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-zero-8    	513443227	         2.324 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-zero-8    	709863433	         1.800 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-8       	  362536	      3406 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-to-8    	48800028	        25.30 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clone-8       	  503090	      2403 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/and-8         	  374648	      3038 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/andnot-8      	  374656	      3111 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/or-8          	  377270	      3102 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/xor-8         	  394912	      3125 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/set-8         	390074299	         3.358 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/remove-8      	754127907	         1.517 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/contains-8    	906369055	         1.277 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clear-8       	  749170	      1521 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/ones-8        	  295353	      3794 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-8         	809796922	         1.492 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-8         	787566426	         1.482 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-zero-8    	850035949	         1.477 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-zero-8    	786250058	         1.516 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-8       	  170004	      6827 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-to-8    	30770097	        38.43 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clone-8       	  490924	      2427 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/and-8         	  460057	      2911 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/andnot-8      	  588342	      3010 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/or-8          	  438674	      2958 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/xor-8         	  394437	      2997 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 1000000/64)
@@ -520,7 +520,7 @@ func TestMinInteger(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc[2], min(tc[0], tc[1]), fmt.Sprintf("min(%v, %v)", tc[0], tc[1]))
+		assert.Equal(t, tc[2], minint(tc[0], tc[1]), fmt.Sprintf("min(%v, %v)", tc[0], tc[1]))
 	}
 }
 
@@ -538,7 +538,7 @@ func TestMaxInteger(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc[2], max(tc[0], tc[1]), fmt.Sprintf("max(%v, %v)", tc[0], tc[1]))
+		assert.Equal(t, tc[2], maxint(tc[0], tc[1]), fmt.Sprintf("max(%v, %v)", tc[0], tc[1]))
 	}
 }
 

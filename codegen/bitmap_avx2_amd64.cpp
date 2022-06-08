@@ -9,7 +9,7 @@
 #include <immintrin.h>
 
 // Function below implement vectorized bit count
-inline void CSA(__m256i *h, __m256i *l, __m256i a, __m256i b, __m256i c) {
+/*inline void CSA(__m256i *h, __m256i *l, __m256i a, __m256i b, __m256i c) {
     __m256i u = _mm256_xor_si256(a, b);
     *h = _mm256_or_si256(_mm256_and_si256(a, b), _mm256_and_si256(u, c));
     *l = _mm256_xor_si256(u, c);
@@ -34,10 +34,11 @@ inline void x64count(const uint64_t *data, uint32_t offset, uint32_t size, uint6
         *out += ((x + (x >> 4) & 0xF0F0F0F0F0F0F0F) * 0x101010101010101) >> 56;
     }
 }
+*/
 
-extern "C" void x64count_avx2(__m256i *d, uint64_t size, uint64_t *result) {
+extern "C" void x64count_avx2(uint64_t *d, uint64_t size, uint64_t *result) {
     *result = 0;
-    uint32_t parts = size / 64;
+    /*uint32_t parts = size / 64;
     if (parts > 0) {
         __m256i total = _mm256_setzero_si256();
         __m256i ones = _mm256_setzero_si256();
@@ -74,5 +75,12 @@ extern "C" void x64count_avx2(__m256i *d, uint64_t size, uint64_t *result) {
                 + _mm256_extract_epi64(total, 2) + _mm256_extract_epi64(total, 3);
     }
 
-    x64count((uint64_t *) d, parts * 64, size, result);
+    x64count((uint64_t *) d, 0, size, result);
+    */
+
+    // (Roman) not using the vectorized approach, as there seems to be a segfault under
+    // certain conditions.
+    for (int i = 0; i < size; i++) {
+        *result += __builtin_popcountll(d[i]);
+    }
 }
