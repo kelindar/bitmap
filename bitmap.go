@@ -153,9 +153,9 @@ func (dst *Bitmap) shrink(length int) {
 
 // minlen calculates the minimum length of all of the bitmaps
 func minlen(a, b Bitmap, extra []Bitmap) int {
-	size := min(len(a), len(b))
+	size := minint(len(a), len(b))
 	for _, v := range extra {
-		if m := min(len(a), len(v)); m < size {
+		if m := minint(len(a), len(v)); m < size {
 			size = m
 		}
 	}
@@ -164,22 +164,22 @@ func minlen(a, b Bitmap, extra []Bitmap) int {
 
 // maxlen calculates the maximum length of all of the bitmaps
 func maxlen(a, b Bitmap, extra []Bitmap) int {
-	size := max(len(a), len(b))
+	size := maxint(len(a), len(b))
 	for _, v := range extra {
-		if m := max(len(a), len(v)); m > size {
+		if m := maxint(len(a), len(v)); m > size {
 			size = m
 		}
 	}
 	return size
 }
 
-// max returns a maximum of two integers without branches.
-func max(v1, v2 int) int {
+// maxint returns a maximum of two integers without branches.
+func maxint(v1, v2 int) int {
 	return v1 - ((v1 - v2) & ((v1 - v2) >> 31))
 }
 
-// min returns a minimum of two integers without branches.
-func min(v1, v2 int) int {
+// minint returns a minimum of two integers without branches.
+func minint(v1, v2 int) int {
 	return v2 + ((v1 - v2) & ((v1 - v2) >> 31))
 }
 

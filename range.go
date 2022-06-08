@@ -9,6 +9,8 @@ import (
 	"github.com/kelindar/simd"
 )
 
+const full = 0xffffffffffffffff
+
 // Range iterates over all of the bits set to one in this bitmap.
 func (dst Bitmap) Range(fn func(x uint32)) {
 	for blkAt := 0; blkAt < len(dst); blkAt++ {
@@ -139,24 +141,36 @@ func (dst *Bitmap) Filter(f func(x uint32) bool) {
 }
 
 // Sum computes a horizontal sum of a slice, filtered by the provided bitmap
-func Sum[T simd.Number](src []T, index Bitmap) (sum T) {
+func Sum[T simd.Number](src []T, filter Bitmap) (sum T) {
+	tail := minint(len(src)/64, len(filter)) << 6 // End of 64-byte blocks
+	last := minint(len(src), len(filter)*64)      // End of slice or mask
+
 	var frame [64]T
-	chunks := min(len(src)/64, len(index))
-	for blkAt := 0; blkAt < chunks; blkAt++ {
-		blk := (index)[blkAt]
-		idx := int(blkAt << 6)
-		switch blk {
-		case 0x0:
-		case 0xffffffffffffffff:
-			sum += simd.Sum(src[idx : idx+64])
+	var i0, i1 int
+	for i1 = 0; i1 < tail; i1 += 64 {
+		switch filter[i1>>6] {
+		case full:
+			continue // Continue buffering
+		case 0:
 		default:
-			sum += simd.Sum(leftPack(frame[:], src[idx:idx+64], blk))
+			sum += simd.Sum(leftPack(&frame, src[i1:i1+64], filter[i1>>6]))
 		}
+
+		// Flush the current buffer
+		if (i1 - i0) > 0 {
+			sum += simd.Sum(src[i0:i1])
+		}
+		i0 = i1 + 64
+	}
+
+	// Flush the accumulated buffer so far
+	if (i1 - i0) > 0 {
+		sum += simd.Sum(src[i0:i1])
 	}
 
 	// Process the tail
-	for i := chunks * 64; i < len(src); i++ {
-		if index.Contains(uint32(i)) {
+	for i := tail; i < last; i++ {
+		if filter.Contains(uint32(i)) {
 			sum += src[i]
 		}
 	}
@@ -164,114 +178,171 @@ func Sum[T simd.Number](src []T, index Bitmap) (sum T) {
 }
 
 // Min finds the smallest value in a slice, filtered by the provided bitmap
-func Min[T simd.Number](src []T, index Bitmap) (out T, ok bool) {
-	if len(src) == 0 || index.Count() == 0 {
-		return 0, false
-	}
+func Min[T simd.Number](src []T, filter Bitmap) (min T, hit bool) {
+	tail := minint(len(src)/64, len(filter)) << 6 // End of 64-byte blocks
+	last := minint(len(src), len(filter)*64)      // End of slice or mask
 
 	var frame [64]T
-	chunks := min(len(src)/64, len(index))
-	out = src[0]
-	for blkAt := 0; blkAt < chunks; blkAt++ {
-		blk := (index)[blkAt]
-		idx := int(blkAt << 6)
-		switch blk {
-		case 0x0:
-		case 0xffffffffffffffff:
-			if v := simd.Min(src[idx : idx+64]); v < out {
-				out = v
-			}
+	var i0, i1 int
+	for i1 = 0; i1 < tail; i1 += 64 {
+		switch filter[i1>>6] {
+		case full:
+			continue // Continue buffering
+		case 0:
 		default:
-			if v := simd.Min(leftPack(frame[:], src[idx:idx+64], (index)[blkAt])); v < out {
-				out = v
+			if m := simd.Min(leftPack(&frame, src[i1:i1+64], filter[i1>>6])); m < min || !hit {
+				hit = true
+				min = m
 			}
+		}
+
+		// Flush the current buffer
+		if (i1 - i0) > 0 {
+			if m := simd.Min(src[i0:i1]); m < min || !hit {
+				hit = true
+				min = m
+			}
+		}
+		i0 = i1 + 64
+	}
+
+	// Flush the accumulated buffer so far
+	if (i1 - i0) > 0 {
+		if m := simd.Min(src[i0:i1]); m < min || !hit {
+			hit = true
+			min = m
 		}
 	}
 
 	// Process the tail
-	for i := chunks * 64; i < len(src); i++ {
-		if index.Contains(uint32(i)) && src[i] < out {
-			out = src[i]
+	for i := tail; i < last; i++ {
+		if filter.Contains(uint32(i)) && (src[i] < min || !hit) {
+			hit = true
+			min = src[i]
 		}
 	}
-	return out, true
+	return
 }
 
 // Max finds the largest value in a slice, filtered by the provided bitmap
-func Max[T simd.Number](src []T, index Bitmap) (out T, ok bool) {
-	if len(src) == 0 || index.Count() == 0 {
-		return 0, false
-	}
+func Max[T simd.Number](src []T, filter Bitmap) (max T, hit bool) {
+	tail := minint(len(src)/64, len(filter)) << 6 // End of 64-byte blocks
+	last := minint(len(src), len(filter)*64)      // End of slice or mask
 
 	var frame [64]T
-	chunks := min(len(src)/64, len(index))
-	out = src[0]
-
-	for blkAt := 0; blkAt < chunks; blkAt++ {
-		blk := (index)[blkAt]
-		offset := int(blkAt << 6)
-
-		switch blk {
-		case 0x0:
-		case 0xffffffffffffffff:
-			if v := simd.Max(src[offset : offset+64]); v > out {
-				out = v
-			}
+	var i0, i1 int
+	for i1 = 0; i1 < tail; i1 += 64 {
+		switch filter[i1>>6] {
+		case full:
+			continue // Continue buffering
+		case 0:
 		default:
-			if v := simd.Max(leftPack(frame[:], src[offset:offset+64], (index)[blkAt])); v > out {
-				out = v
+			if m := simd.Max(leftPack(&frame, src[i1:i1+64], filter[i1>>6])); m > max || !hit {
+				hit = true
+				max = m
 			}
+		}
+
+		// Flush the current buffer
+		if (i1 - i0) > 0 {
+			if m := simd.Max(src[i0:i1]); m > max || !hit {
+				hit = true
+				max = m
+			}
+		}
+		i0 = i1 + 64
+	}
+
+	// Flush the accumulated buffer so far
+	if (i1 - i0) > 0 {
+		if m := simd.Max(src[i0:i1]); m > max || !hit {
+			hit = true
+			max = m
 		}
 	}
 
 	// Process the tail
-	for i := chunks * 64; i < len(src); i++ {
-		if index.Contains(uint32(i)) && src[i] > out {
-			out = src[i]
+	for i := tail; i < last; i++ {
+		if filter.Contains(uint32(i)) && (src[i] > max || !hit) {
+			hit = true
+			max = src[i]
 		}
 	}
-	return out, true
+	return
 }
 
 // leftPack left-packs a src slice into a dst for a single block blk
-func leftPack[T any](dst, src []T, blk uint64) []T {
-	dst = dst[:0]
+func leftPack[T any](dst *[64]T, src []T, blk uint64) []T {
 	offset := 0
+	cursor := 0
 	for ; blk > 0; blk = blk >> 4 {
 		switch blk & 0b1111 {
 		case 0b0001:
-			dst = append(dst, src[offset+0])
+			dst[cursor] = src[offset+0]
+			cursor += 1
 		case 0b0010:
-			dst = append(dst, src[offset+1])
+			dst[cursor] = src[offset+1]
+			cursor += 1
 		case 0b0011:
-			dst = append(dst, src[offset+0], src[offset+1])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+1]
+			cursor += 2
 		case 0b0100:
-			dst = append(dst, src[offset+2])
+			dst[cursor] = src[offset+2]
+			cursor += 1
 		case 0b0101:
-			dst = append(dst, src[offset+0], src[offset+2])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+2]
+			cursor += 2
 		case 0b0110:
-			dst = append(dst, src[offset+1], src[offset+2])
+			dst[cursor] = src[offset+1]
+			dst[cursor+1] = src[offset+2]
+			cursor += 2
 		case 0b0111:
-			dst = append(dst, src[offset+0], src[offset+1], src[offset+2])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+1]
+			dst[cursor+2] = src[offset+2]
+			cursor += 3
 		case 0b1000:
-			dst = append(dst, src[offset+3])
+			dst[cursor] = src[offset+3]
+			cursor += 1
 		case 0b1001:
-			dst = append(dst, src[offset+0], src[offset+3])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+3]
+			cursor += 2
 		case 0b1010:
-			dst = append(dst, src[offset+1], src[offset+3])
+			dst[cursor] = src[offset+1]
+			dst[cursor+1] = src[offset+3]
+			cursor += 2
 		case 0b1011:
-			dst = append(dst, src[offset+0], src[offset+1], src[offset+3])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+1]
+			dst[cursor+2] = src[offset+3]
+			cursor += 3
 		case 0b1100:
-			dst = append(dst, src[offset+2], src[offset+3])
+			dst[cursor] = src[offset+2]
+			dst[cursor+1] = src[offset+3]
+			cursor += 2
 		case 0b1101:
-			dst = append(dst, src[offset+0], src[offset+2], src[offset+3])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+2]
+			dst[cursor+2] = src[offset+3]
+			cursor += 3
 		case 0b1110:
-			dst = append(dst, src[offset+1], src[offset+2], src[offset+3])
+			dst[cursor] = src[offset+1]
+			dst[cursor+1] = src[offset+2]
+			dst[cursor+2] = src[offset+3]
+			cursor += 3
 		case 0b1111:
-			dst = append(dst, src[offset+0], src[offset+1], src[offset+2], src[offset+3])
+			dst[cursor] = src[offset+0]
+			dst[cursor+1] = src[offset+1]
+			dst[cursor+2] = src[offset+2]
+			dst[cursor+3] = src[offset+3]
+			cursor += 4
 		}
+
 		offset += 4
 	}
 
-	return dst
+	return (*dst)[:cursor]
 }

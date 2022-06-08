@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PATH="$PATH:./bin"
-CLANG_OPTS="-mno-red-zone -mstackrealign -mllvm -inline-threshold=1000 -fno-asynchronous-unwind-tables -fno-exceptions -fno-rtti -ffast-math -O1"
+CLANG_OPTS="-mno-red-zone -mstackrealign -mllvm -inline-threshold=1000 -fno-asynchronous-unwind-tables -fno-exceptions -fno-rtti -ffast-math -O3"
 
 # Generates AMD64 
 function build_avx2_amd64 {
