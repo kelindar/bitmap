@@ -13,23 +13,23 @@ import (
 )
 
 /*
-cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkBitmap/set-8         	390074299	         3.358 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/remove-8      	754127907	         1.517 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/contains-8    	906369055	         1.277 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clear-8       	  749170	      1521 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/ones-8        	  295353	      3794 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-8         	809796922	         1.492 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-8         	787566426	         1.482 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/min-zero-8    	850035949	         1.477 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/max-zero-8    	786250058	         1.516 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-8       	  170004	      6827 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/count-to-8    	30770097	        38.43 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/clone-8       	  490924	      2427 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/and-8         	  460057	      2911 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/andnot-8      	  588342	      3010 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/or-8          	  438674	      2958 ns/op	       0 B/op	       0 allocs/op
-BenchmarkBitmap/xor-8         	  394437	      2997 ns/op	       0 B/op	       0 allocs/op
+cpu: 13th Gen Intel(R) Core(TM) i7-13700K
+BenchmarkBitmap/set-24         	655739137	         1.803 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/remove-24      	1000000000	         1.107 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/contains-24    	1000000000	         0.8975 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clear-24       	  827574	      1487 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/ones-24        	  571444	      2088 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-24         	979591036	         1.252 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-24         	944884120	         1.229 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/min-zero-24    	991736356	         1.258 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/max-zero-24    	1000000000	         1.157 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-24       	  393440	      3086 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/count-to-24    	58537441	        20.20 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/clone-24       	  648651	      1875 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/and-24         	  685710	      1733 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/andnot-24      	  705882	      1709 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/or-24          	  705894	      1702 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBitmap/xor-24         	  705919	      1721 ns/op	       0 B/op	       0 allocs/op
 */
 func BenchmarkBitmap(b *testing.B) {
 	other := make(Bitmap, 1000000/64)
@@ -102,9 +102,9 @@ func BenchmarkBitmap(b *testing.B) {
 }
 
 /*
-cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkMany/and4-naive-8         	  100153	     12324 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMany/and4-many-8          	  139195	      8709 ns/op	       0 B/op	       0 allocs/op
+cpu: 13th Gen Intel(R) Core(TM) i7-13700K
+BenchmarkMany/and4-naive-24         	  179103	      6745 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMany/and4-batch-24         	  233006	      5002 ns/op	      32 B/op	       1 allocs/op
 */
 func BenchmarkMany(b *testing.B) {
 	other := make(Bitmap, 1000000/64)

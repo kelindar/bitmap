@@ -5,12 +5,16 @@ package bitmap
 
 import (
 	"math/bits"
+	"runtime"
 
 	"github.com/klauspost/cpuid/v2"
 )
 
 var (
-	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
+	avx2     = cpuid.CPU.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3)
+	apple    = runtime.GOARCH == "arm64" && runtime.GOOS == "darwin"
+	neon     = runtime.GOARCH == "arm64" && cpuid.CPU.Supports(cpuid.SVE)
+	hardware = avx2 || apple || neon
 )
 
 // Bitmap represents a scalar-backed bitmap index
