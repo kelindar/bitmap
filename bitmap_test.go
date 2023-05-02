@@ -110,6 +110,15 @@ func BenchmarkMany(b *testing.B) {
 	other := make(Bitmap, 1000000/64)
 	other.Set(1000000)
 
+	run(b, "and4-noasm", func(index Bitmap) {
+		max := minlen(index, other, nil)
+		index.shrink(max)
+		and(index, max, other, nil)
+		and(index, max, other, nil)
+		and(index, max, other, nil)
+		and(index, max, other, nil)
+	})
+
 	run(b, "and4-naive", func(index Bitmap) {
 		index.And(other)
 		index.And(other)
