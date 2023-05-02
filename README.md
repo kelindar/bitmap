@@ -191,4 +191,4 @@ We are open to contributions, feel free to submit a pull request and we'll revie
 
 ## License
 
-Tile is licensed under the [MIT License](LICENSE.md).
+Tile is licensed under the [MIT License](LICENSE).
