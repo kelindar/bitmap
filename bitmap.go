@@ -5,13 +5,33 @@ package bitmap
 
 import (
 	"math/bits"
+	"unsafe"
 
 	"github.com/klauspost/cpuid/v2"
 )
 
-var (
-	avx2 = cpuid.CPU.Supports(cpuid.AVX2)
+const (
+	isUnsupported = iota
+	isAccelerated
+	isAVX512
 )
+
+// Hardware contains the resolved acceleration level
+var hardware = levelOf(cpuid.CPU)
+
+// levelOf returns the hardware acceleration level
+func levelOf(cpu cpuid.CPUInfo) int {
+	switch {
+	case cpu.Supports(cpuid.AVX512F) && cpu.Supports(cpuid.AVX512DQ) && cpu.Supports(cpuid.AVX512BW):
+		return isAVX512
+	case cpu.Supports(cpuid.AVX2) && cpu.Supports(cpuid.FMA3):
+		return isAccelerated
+	case cpu.Supports(cpuid.ASIMD):
+		return isAccelerated
+	default:
+		return isUnsupported
+	}
+}
 
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
@@ -204,4 +224,26 @@ func resize(capacity, v int) int {
 		capacity += (capacity + 3*threshold) / 4
 	}
 	return capacity
+}
+
+// dimensionsOf returns a uint64 containing the packed dimensions
+func dimensionsOf(n, m int) uint64 {
+	return uint64(n) | (uint64(m) << 32)
+}
+
+// pointersOf returns a pointer to an array containing pointers to the
+// first element of each bitmap and the maximum length of all bitmaps
+func pointersOf(other Bitmap, extra []Bitmap) (unsafe.Pointer, int) {
+	out := make([]unsafe.Pointer, len(extra)+1)
+	out[0] = unsafe.Pointer(&other[0])
+	max := 0
+
+	for i := range extra {
+		out[i+1] = unsafe.Pointer(&extra[i][0])
+		if len(extra[i]) > max {
+			max = len(extra[i])
+		}
+	}
+
+	return unsafe.Pointer(&out[0]), max
 }

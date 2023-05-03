@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/klauspost/cpuid/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -145,4 +146,78 @@ func TestFromHex(t *testing.T) {
 	bm, err = fromHex("")
 	assert.NoError(t, err)
 	assert.Nil(t, bm)
+}
+
+func TestDimensionsOf(t *testing.T) {
+	testCases := []struct {
+		n        int
+		m        int
+		expected uint64
+	}{
+		{0, 0, 0},
+		{10, 11, 0xb0000000a},
+	}
+
+	for _, tc := range testCases {
+		d := dimensionsOf(tc.n, tc.m)
+		assert.Equal(t, tc.expected, d)
+	}
+}
+
+func TestPointersOf(t *testing.T) {
+	testCases := []struct {
+		inputOther Bitmap
+		inputExtra []Bitmap
+	}{
+		{Bitmap{1}, []Bitmap{{2}}},
+		{Bitmap{1}, []Bitmap{{2}, {3}}},
+	}
+
+	for _, tc := range testCases {
+		ptr, max := pointersOf(tc.inputOther, tc.inputExtra)
+		assert.NotNil(t, ptr)
+		assert.NotZero(t, uintptr(ptr))
+		assert.NotZero(t, max)
+	}
+}
+
+func TestLevelOfWithEnabledFeatures(t *testing.T) {
+	testCases := []struct {
+		name       string
+		featureIDs []cpuid.FeatureID
+		expected   int
+	}{
+		{
+			name:       "AVX-512F, AVX-512BW, and AVX-512DQ support",
+			featureIDs: []cpuid.FeatureID{cpuid.AVX512F, cpuid.AVX512BW, cpuid.AVX512DQ},
+			expected:   isAVX512,
+		},
+		{
+			name:       "AVX2 and FMA3 support",
+			featureIDs: []cpuid.FeatureID{cpuid.AVX2, cpuid.FMA3},
+			expected:   isAccelerated,
+		},
+		{
+			name:       "NEON support on ARM64",
+			featureIDs: []cpuid.FeatureID{cpuid.ASIMD},
+			expected:   isAccelerated,
+		},
+		{
+			name:       "Unsupported feature combination",
+			featureIDs: []cpuid.FeatureID{cpuid.SHA3, cpuid.AESARM},
+			expected:   isUnsupported,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cpu := cpuid.CPUInfo{}
+			for _, feature := range tc.featureIDs {
+				cpu.Enable(feature)
+			}
+
+			level := levelOf(cpu)
+			assert.Equal(t, tc.expected, level, "expected to return %d, but got %d", tc.expected, level)
+		})
+	}
 }
