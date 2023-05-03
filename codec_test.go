@@ -204,7 +204,7 @@ func TestLevelOfWithEnabledFeatures(t *testing.T) {
 		},
 		{
 			name:       "Unsupported feature combination",
-			featureIDs: []cpuid.FeatureID{cpuid.AVX512F, cpuid.AESARM},
+			featureIDs: []cpuid.FeatureID{cpuid.SHA3, cpuid.AESARM},
 			expected:   isUnsupported,
 		},
 	}
