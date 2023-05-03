@@ -1,7 +1,7 @@
 // Copyright (c) Roman Atachiants and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
-//go:build noasm && !(amd64 || arm64)
+//go:build noasm || (!amd64 && !arm64)
 
 package bitmap
 
