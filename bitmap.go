@@ -5,7 +5,6 @@ package bitmap
 
 import (
 	"math/bits"
-	"runtime"
 	"unsafe"
 
 	"github.com/klauspost/cpuid/v2"
@@ -17,21 +16,22 @@ const (
 	isAVX512
 )
 
-// Hardware returns the hardware acceleration level
-var hardware = func() int {
+// Hardware contains the resolved acceleration level
+var hardware = levelOf(cpuid.CPU)
+
+// levelOf returns the hardware acceleration level
+func levelOf(cpu cpuid.CPUInfo) int {
 	switch {
-	case cpuid.CPU.Supports(cpuid.AVX512F) && cpuid.CPU.Supports(cpuid.AVX512DQ) && cpuid.CPU.Supports(cpuid.AVX512BW):
+	case cpu.Supports(cpuid.AVX512F) && cpu.Supports(cpuid.AVX512DQ) && cpu.Supports(cpuid.AVX512BW):
 		return isAVX512
-	case cpuid.CPU.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3):
+	case cpu.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3):
 		return isAccelerated
-	case runtime.GOARCH == "arm64" && runtime.GOOS == "darwin":
-		return isAccelerated
-	case runtime.GOARCH == "arm64" && cpuid.CPU.Supports(cpuid.SVE):
+	case cpu.Supports(cpuid.ASIMD):
 		return isAccelerated
 	default:
 		return isUnsupported
 	}
-}()
+}
 
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
