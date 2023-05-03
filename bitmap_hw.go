@@ -32,13 +32,21 @@ func (dst *Bitmap) And(other Bitmap, extra ...Bitmap) {
 	dst.shrink(max)
 
 	switch hardware {
-	case true:
+	case isAccelerated:
 		switch len(extra) {
 		case 0:
 			_and(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(max))
 		default:
 			vx, _ := convertToPointerSlice(other, extra)
 			_and_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+		}
+	case isAVX512:
+		switch len(extra) {
+		case 0:
+			_and_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(max))
+		default:
+			vx, _ := convertToPointerSlice(other, extra)
+			_and_many_avx512(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
 		}
 	default:
 		and(*dst, max, other, extra)
@@ -52,13 +60,21 @@ func (dst *Bitmap) AndNot(other Bitmap, extra ...Bitmap) {
 	max := minlen(*dst, other, extra)
 
 	switch hardware {
-	case true:
+	case isAccelerated:
 		switch len(extra) {
 		case 0:
 			_andn(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(max))
 		default:
 			vx, _ := convertToPointerSlice(other, extra)
 			_andn_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+		}
+	case isAVX512:
+		switch len(extra) {
+		case 0:
+			_andn_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(max))
+		default:
+			vx, _ := convertToPointerSlice(other, extra)
+			_andn_many_avx512(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
 		}
 	default:
 		andn(*dst, max, other, extra)
@@ -72,13 +88,21 @@ func (dst *Bitmap) Or(other Bitmap, extra ...Bitmap) {
 	dst.grow(max - 1)
 
 	switch hardware {
-	case true:
+	case isAccelerated:
 		switch len(extra) {
 		case 0:
 			_or(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
 		default:
 			vx, max := convertToPointerSlice(other, extra)
 			_or_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+		}
+	case isAVX512:
+		switch len(extra) {
+		case 0:
+			_or_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
+		default:
+			vx, max := convertToPointerSlice(other, extra)
+			_or_many_avx512(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
 		}
 	default:
 		or(*dst, other, extra)
@@ -91,13 +115,21 @@ func (dst *Bitmap) Xor(other Bitmap, extra ...Bitmap) {
 	dst.grow(max - 1)
 
 	switch hardware {
-	case true:
+	case isAccelerated:
 		switch len(extra) {
 		case 0:
 			_xor(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
 		default:
 			vx, max := convertToPointerSlice(other, extra)
 			_xor_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+		}
+	case isAVX512:
+		switch len(extra) {
+		case 0:
+			_xor_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
+		default:
+			vx, max := convertToPointerSlice(other, extra)
+			_xor_many_avx512(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
 		}
 	default:
 		xor(*dst, other, extra)
@@ -111,7 +143,7 @@ func (dst Bitmap) Count() int {
 	}
 
 	switch hardware {
-	case true:
+	case isAccelerated:
 		var res uint64
 		_count(unsafe.Pointer(&dst[0]), uint64(len(dst)), unsafe.Pointer(&res))
 		return int(res)

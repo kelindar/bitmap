@@ -103,8 +103,9 @@ func BenchmarkBitmap(b *testing.B) {
 
 /*
 cpu: 13th Gen Intel(R) Core(TM) i7-13700K
-BenchmarkMany/and4-naive-24         	  179103	      6745 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMany/and4-batch-24         	  233006	      5002 ns/op	      32 B/op	       1 allocs/op
+BenchmarkMany/and4-noasm-24         	   66297	     18139 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMany/and4-naive-24         	  179106	      6803 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMany/and4-batch-24         	  258091	      4679 ns/op	      32 B/op	       1 allocs/op
 */
 func BenchmarkMany(b *testing.B) {
 	other := make(Bitmap, 1000000/64)
@@ -157,47 +158,6 @@ func TestClear(t *testing.T) {
 		assert.False(t, index.Contains(i), i)
 	}
 	assert.True(t, index.Contains(500))
-}
-
-func testTruthTables(t *testing.T) {
-	{ // AND
-		a := Bitmap{0b0011, 0b1011, 0b1100, 0b0000, 0b0011, 0b1011, 0b1100, 0b0000, 0b0011}
-		a.And(Bitmap{0b0101, 0b1101, 0b1010, 0b1111, 0b0101, 0b1101, 0b1010, 0b1111, 0b0101})
-		assert.Equal(t, 0b0001, int(a[0]))
-		assert.Equal(t, 0b1001, int(a[1]))
-		assert.Equal(t, 0b1000, int(a[2]))
-		assert.Equal(t, 0b0000, int(a[3]))
-		assert.Equal(t, 0b0001, int(a[4]))
-		assert.Equal(t, 0b1001, int(a[5]))
-		assert.Equal(t, 0b1000, int(a[6]))
-		assert.Equal(t, 0b0000, int(a[7]))
-		assert.Equal(t, 0b0001, int(a[8]))
-	}
-	{ // AND NOT
-		a := Bitmap{0b0011, 0, 0, 0}
-		a.AndNot(Bitmap{0b0101})
-		assert.Equal(t, 0b0010, int(a[0]))
-	}
-	{ // OR
-		a := Bitmap{0b0011, 0, 0, 0}
-		a.Or(Bitmap{0b0101})
-		assert.Equal(t, 0b0111, int(a[0]))
-	}
-	{ // XOR
-		a := Bitmap{0b0011, 0, 0, 0}
-		a.Xor(Bitmap{0b0101})
-		assert.Equal(t, 0b0110, int(a[0]))
-	}
-}
-
-func TestTruthTables_NoSIMD(t *testing.T) {
-	avx2 = false
-	testTruthTables(t)
-}
-
-func TestTruthTables_SIMD(t *testing.T) {
-	avx2 = true
-	testTruthTables(t)
 }
 
 func TestAnd(t *testing.T) {
@@ -570,10 +530,10 @@ func TestBatched(t *testing.T) {
 		},
 	}
 
-	for _, withAvx := range []bool{true, false} {
+	for _, withHw := range []int{isAccelerated, isUnsupported} {
 		for i, tc := range tests {
-			t.Run(fmt.Sprintf("%v,avx=%v", i, withAvx), func(t *testing.T) {
-				avx2 = withAvx
+			t.Run(fmt.Sprintf("%v,avx=%v", i, withHw), func(t *testing.T) {
+				hardware = withHw
 				naive := func(n int) Bitmap {
 					input := Bitmap{bits}
 					tc(input)(Bitmap{bits})
@@ -597,5 +557,46 @@ func TestBatched(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestTruthTables_NoSIMD(t *testing.T) {
+	hardware = isUnsupported
+	testTruthTables(t)
+}
+
+func TestTruthTables_SIMD(t *testing.T) {
+	hardware = isAccelerated
+	testTruthTables(t)
+}
+
+func testTruthTables(t *testing.T) {
+	{ // AND
+		a := Bitmap{0b0011, 0b1011, 0b1100, 0b0000, 0b0011, 0b1011, 0b1100, 0b0000, 0b0011}
+		a.And(Bitmap{0b0101, 0b1101, 0b1010, 0b1111, 0b0101, 0b1101, 0b1010, 0b1111, 0b0101})
+		assert.Equal(t, 0b0001, int(a[0]))
+		assert.Equal(t, 0b1001, int(a[1]))
+		assert.Equal(t, 0b1000, int(a[2]))
+		assert.Equal(t, 0b0000, int(a[3]))
+		assert.Equal(t, 0b0001, int(a[4]))
+		assert.Equal(t, 0b1001, int(a[5]))
+		assert.Equal(t, 0b1000, int(a[6]))
+		assert.Equal(t, 0b0000, int(a[7]))
+		assert.Equal(t, 0b0001, int(a[8]))
+	}
+	{ // AND NOT
+		a := Bitmap{0b0011, 0, 0, 0}
+		a.AndNot(Bitmap{0b0101})
+		assert.Equal(t, 0b0010, int(a[0]))
+	}
+	{ // OR
+		a := Bitmap{0b0011, 0, 0, 0}
+		a.Or(Bitmap{0b0101})
+		assert.Equal(t, 0b0111, int(a[0]))
+	}
+	{ // XOR
+		a := Bitmap{0b0011, 0, 0, 0}
+		a.Xor(Bitmap{0b0101})
+		assert.Equal(t, 0b0110, int(a[0]))
 	}
 }

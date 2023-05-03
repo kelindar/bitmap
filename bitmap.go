@@ -10,12 +10,27 @@ import (
 	"github.com/klauspost/cpuid/v2"
 )
 
-var (
-	avx2     = cpuid.CPU.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3)
-	apple    = runtime.GOARCH == "arm64" && runtime.GOOS == "darwin"
-	neon     = runtime.GOARCH == "arm64" && cpuid.CPU.Supports(cpuid.SVE)
-	hardware = avx2 || apple || neon
+const (
+	isUnsupported = iota
+	isAccelerated
+	isAVX512
 )
+
+// Hardware returns the hardware acceleration level
+var hardware = func() int {
+	switch {
+	case cpuid.CPU.Supports(cpuid.AVX512F) && cpuid.CPU.Supports(cpuid.AVX512DQ) && cpuid.CPU.Supports(cpuid.AVX512BW):
+		return isAVX512
+	case cpuid.CPU.Supports(cpuid.AVX2) && cpuid.CPU.Supports(cpuid.FMA3):
+		return isAccelerated
+	case runtime.GOARCH == "arm64" && runtime.GOOS == "darwin":
+		return isAccelerated
+	case runtime.GOARCH == "arm64" && cpuid.CPU.Supports(cpuid.SVE):
+		return isAccelerated
+	default:
+		return isUnsupported
+	}
+}()
 
 // Bitmap represents a scalar-backed bitmap index
 type Bitmap []uint64
