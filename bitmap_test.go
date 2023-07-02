@@ -560,6 +560,30 @@ func TestBatched(t *testing.T) {
 	}
 }
 
+func TestEmptyAnd(t *testing.T) {
+	var a, b Bitmap
+	a.And(b)
+	assert.Equal(t, 0, a.Count())
+}
+
+func TestEmptyAndNot(t *testing.T) {
+	var a, b Bitmap
+	a.AndNot(b)
+	assert.Equal(t, 0, a.Count())
+}
+
+func TestEmptyOr(t *testing.T) {
+	var a, b Bitmap
+	a.Or(b)
+	assert.Equal(t, 0, a.Count())
+}
+
+func TestEmptyXor(t *testing.T) {
+	var a, b Bitmap
+	a.Xor(b)
+	assert.Equal(t, 0, a.Count())
+}
+
 func TestTruthTables_NoSIMD(t *testing.T) {
 	hardware = isUnsupported
 	testTruthTables(t)
