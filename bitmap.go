@@ -4,7 +4,6 @@
 package bitmap
 
 import (
-	"math"
 	"math/bits"
 	"unsafe"
 
@@ -124,8 +123,8 @@ func (dst Bitmap) CountTo(until uint32) int {
 		return 0
 	}
 
-	if until == math.MaxUint32 {
-		until = uint32(len(dst) << 6)
+	if maxUntil := uint32(len(dst) << 6); until > maxUntil {
+		until = maxUntil
 	}
 
 	// Figure out the index of the last block
