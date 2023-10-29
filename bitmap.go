@@ -4,6 +4,7 @@
 package bitmap
 
 import (
+	"math"
 	"math/bits"
 	"unsafe"
 
@@ -123,18 +124,21 @@ func (dst Bitmap) CountTo(until uint32) int {
 		return 0
 	}
 
-	// Figure out the index of the last block
-	blkUntil := int(until >> 6)
-	bitUntil := int(until % 64)
-	if blkUntil >= len(dst) {
-		blkUntil = len(dst) - 1
+	if until == math.MaxUint32 {
+		until = uint32(len(dst) << 6)
 	}
+
+	// Figure out the index of the last block
+	blkUntil := until >> 6
+	bitUntil := until % 64
 
 	// Count the bits right before the last block
 	sum := dst[:blkUntil].Count()
 
 	// Count the bits at the end
-	sum += bits.OnesCount64(dst[blkUntil] << (64 - uint64(bitUntil)))
+	if bitUntil > 0 {
+		sum += bits.OnesCount64(dst[blkUntil] << (64 - uint64(bitUntil)))
+	}
 	return sum
 }
 

@@ -392,7 +392,12 @@ func TestCount(t *testing.T) {
 	assert.Equal(t, 4, b.CountTo(100))
 	assert.Equal(t, 4, b.CountTo(101))
 	assert.Equal(t, 5, b.CountTo(102))
+	assert.Equal(t, 8, b.CountTo(128))
 	assert.Equal(t, 8, b.CountTo(math.MaxUint32))
+
+	b.Set(127)
+
+	assert.Equal(t, 9, b.CountTo(128))
 }
 
 func TestGrow(t *testing.T) {
