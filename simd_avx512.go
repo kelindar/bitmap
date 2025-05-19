@@ -5,26 +5,34 @@ package bitmap
 
 import "unsafe"
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _and_avx512(a unsafe.Pointer, b unsafe.Pointer, n uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _andn_avx512(a unsafe.Pointer, b unsafe.Pointer, n uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _or_avx512(a unsafe.Pointer, b unsafe.Pointer, n uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _xor_avx512(a unsafe.Pointer, b unsafe.Pointer, n uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _and_many_avx512(a unsafe.Pointer, b unsafe.Pointer, dims uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _andn_many_avx512(a unsafe.Pointer, b unsafe.Pointer, dims uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _or_many_avx512(a unsafe.Pointer, b unsafe.Pointer, dims uint64)
 
-//go:noescape,nosplit
+//go:nosplit
+//go:noescape
 func _xor_many_avx512(a unsafe.Pointer, b unsafe.Pointer, dims uint64)
