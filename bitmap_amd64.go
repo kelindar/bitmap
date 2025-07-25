@@ -75,6 +75,9 @@ func (dst *Bitmap) Or(other Bitmap, extra ...Bitmap) {
 	if max == 0 {
 		return
 	}
+	if len(other) == 0 {
+		other.grow(max - 1)
+	}
 
 	dst.grow(max - 1)
 	switch hardware {
@@ -104,6 +107,9 @@ func (dst *Bitmap) Xor(other Bitmap, extra ...Bitmap) {
 	max := maxlen(*dst, other, extra)
 	if max == 0 {
 		return
+	}
+	if len(other) == 0 {
+		other.grow(max - 1)
 	}
 
 	dst.grow(max - 1)
