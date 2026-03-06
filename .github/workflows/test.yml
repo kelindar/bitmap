@@ -1,5 +1,5 @@
 name: Test
-on: [push, pull_request]
+on: [push]
 env:
   GITHUB_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
   GO111MODULE: "on"
