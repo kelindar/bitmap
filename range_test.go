@@ -17,7 +17,6 @@ func BenchmarkRange(b *testing.B) {
 	run(b, "range", func(index Bitmap) {
 		index.Range(func(x uint32) {
 			i = x
-			return
 		})
 	})
 
