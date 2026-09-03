@@ -221,3 +221,19 @@ func TestLevelOfWithEnabledFeatures(t *testing.T) {
 		})
 	}
 }
+
+func TestCloneIntoLargerDestination(t *testing.T) {
+	var src Bitmap
+	src.Set(1)
+
+	into := Bitmap{}
+	into.Set(300)
+	into.Set(500)
+
+	clone := src.Clone(&into)
+	assert.Equal(t, src, into)
+	assert.Equal(t, src, clone)
+
+	clone.Set(400)
+	assert.False(t, clone.Contains(300))
+}
