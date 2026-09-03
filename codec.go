@@ -104,7 +104,8 @@ func (dst Bitmap) Clone(into *Bitmap) Bitmap {
 	into.grow(max - 1)
 
 	copy(*into, dst)
-	return (*into)[:len(dst)]
+	into.shrink(len(dst)) // reused destinations may hold bits past the source's length
+	return *into
 }
 
 // Clear clears the bitmap and resizes it to zero.
