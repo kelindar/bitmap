@@ -83,16 +83,30 @@ func (dst *Bitmap) Or(other Bitmap, extra ...Bitmap) {
 		case 0:
 			_or(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
 		default:
-			vx, max := pointersOf(other, extra)
-			_or_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+			// _or_many uses one word count for every input, so it cannot union
+			// bitmaps of different lengths. Union each source over its own.
+			if len(other) > 0 {
+				_or(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
+			}
+			for i := range extra {
+				if len(extra[i]) > 0 {
+					_or(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&extra[i][0]), uint64(len(extra[i])))
+				}
+			}
 		}
 	case isAVX512:
 		switch len(extra) {
 		case 0:
 			_or_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
 		default:
-			vx, max := pointersOf(other, extra)
-			_or_many_avx512(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+			if len(other) > 0 {
+				_or_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
+			}
+			for i := range extra {
+				if len(extra[i]) > 0 {
+					_or_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&extra[i][0]), uint64(len(extra[i])))
+				}
+			}
 		}
 	default:
 		or(*dst, other, extra)
@@ -113,16 +127,30 @@ func (dst *Bitmap) Xor(other Bitmap, extra ...Bitmap) {
 		case 0:
 			_xor(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
 		default:
-			vx, max := pointersOf(other, extra)
-			_xor_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+			// _xor_many uses one word count for every input, so it cannot combine
+			// bitmaps of different lengths. Fold in each source over its own.
+			if len(other) > 0 {
+				_xor(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
+			}
+			for i := range extra {
+				if len(extra[i]) > 0 {
+					_xor(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&extra[i][0]), uint64(len(extra[i])))
+				}
+			}
 		}
 	case isAVX512:
 		switch len(extra) {
 		case 0:
 			_xor_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
 		default:
-			vx, max := pointersOf(other, extra)
-			_xor_many_avx512(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+			if len(other) > 0 {
+				_xor_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(len(other)))
+			}
+			for i := range extra {
+				if len(extra[i]) > 0 {
+					_xor_avx512(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&extra[i][0]), uint64(len(extra[i])))
+				}
+			}
 		}
 	default:
 		xor(*dst, other, extra)
