@@ -148,6 +148,12 @@ func TestFromHex(t *testing.T) {
 	assert.Nil(t, bm)
 }
 
+func TestFromHexOrder(t *testing.T) {
+	bm, err := fromHex("0102030405060708")
+	assert.NoError(t, err)
+	assert.Equal(t, Bitmap{0x0102030405060708}, bm)
+}
+
 func TestDimensionsOf(t *testing.T) {
 	testCases := []struct {
 		n        int

@@ -170,22 +170,29 @@ func (dst *Bitmap) UnmarshalJSON(data []byte) (err error) {
 
 // fromHex reads a hexadecimal string and converts it to bitmap, character at index 0 is the most significant
 func fromHex(hexString string) (Bitmap, error) {
-	bytes, err := hex.DecodeString(hexString)
+	b, err := hex.DecodeString(hexString)
 
 	switch {
 	case err != nil:
 		return nil, err
-	case len(bytes) == 0:
+	case len(b) == 0:
 		return nil, nil
 	}
 
-	// reverse bytes to maintain bytes significance order (least significant = hexString tail = list head)
-	for l, r := 0, len(bytes)-1; l < r; l, r = l+1, r-1 {
-		bytes[l], bytes[r] = bytes[r], bytes[l]
+	// reverse bytes into little-endian order (least significant = hexString tail = list head)
+	for l, r := 0, len(b)-1; l < r; l, r = l+1, r-1 {
+		b[l], b[r] = b[r], b[l]
 	}
 
-	for len(bytes)%8 != 0 {
-		bytes = append(bytes, 0)
+	for len(b)%8 != 0 {
+		b = append(b, 0)
 	}
-	return FromBytes(bytes), nil
+
+	// Use explicit little-endian decoding instead of unsafe pointer cast
+	// to produce correct results on big-endian architectures (e.g. s390x).
+	out := make(Bitmap, len(b)/8)
+	for i := range out {
+		out[i] = binary.LittleEndian.Uint64(b[i*8 : (i+1)*8])
+	}
+	return out, nil
 }
