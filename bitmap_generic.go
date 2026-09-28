@@ -14,8 +14,7 @@ func (dst *Bitmap) And(other Bitmap, extra ...Bitmap) {
 
 // AndNot computes the difference between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) AndNot(other Bitmap, extra ...Bitmap) {
-	max := minlen(*dst, other, extra)
-	andn(*dst, max, other, extra)
+	andn(*dst, other, extra)
 }
 
 // Or computes the union between two bitmaps and stores the result in the current bitmap

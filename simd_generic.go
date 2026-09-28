@@ -28,13 +28,13 @@ func and(a Bitmap, upper int, other Bitmap, extra []Bitmap) {
 }
 
 // AndNot computes the difference between two bitmaps and stores the result in the current bitmap
-func andn(a Bitmap, upper int, other Bitmap, extra []Bitmap) {
-	for i := 0; i < upper; i++ {
+func andn(a Bitmap, other Bitmap, extra []Bitmap) {
+	for i := 0; i < minint(len(a), len(other)); i++ {
 		a[i] = a[i] &^ other[i]
 	}
 
 	for _, b := range extra {
-		for i := 0; i < upper; i++ {
+		for i := 0; i < minint(len(a), len(b)); i++ {
 			a[i] = a[i] &^ b[i]
 		}
 	}

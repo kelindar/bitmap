@@ -701,3 +701,41 @@ func TestXorRaggedSizes(t *testing.T) {
 	assert.True(t, dst.Contains(260), "bit 260 from longer extra must survive")
 	assert.Equal(t, 4, dst.Count())
 }
+
+func TestAndNotRaggedSizes(t *testing.T) {
+	var dst Bitmap
+	dst.Set(1)
+	dst.Set(3)
+	dst.Set(200) // word 3, beyond other
+
+	var other Bitmap
+	other.Set(3) // word 0 only
+
+	var long Bitmap
+	long.Set(200)
+
+	dst.AndNot(other, long)
+	assert.True(t, dst.Contains(1))
+	assert.False(t, dst.Contains(3))
+	assert.False(t, dst.Contains(200), "bit 200 should be removed")
+	assert.Equal(t, 1, dst.Count())
+
+	var empty Bitmap
+	dst.Set(200)
+	dst.AndNot(empty, long)
+	assert.False(t, dst.Contains(200), "bit 200 should be removed")
+	assert.Equal(t, 1, dst.Count())
+
+	var short Bitmap
+	short.Set(1) // word 0 only, shorter than dst
+	dst.Set(3)
+	dst.Set(200)
+	dst.AndNot(long, short)
+	assert.False(t, dst.Contains(1))
+	assert.True(t, dst.Contains(3))
+	assert.Equal(t, 1, dst.Count())
+
+	var none Bitmap
+	none.AndNot(short, long)
+	assert.Equal(t, 0, none.Count())
+}

@@ -266,6 +266,18 @@ func foldEach(dst *Bitmap, op simdBinary, other Bitmap, extra []Bitmap) {
 	}
 }
 
+// andnEach subtracts every source from dst in turn, each over the words it shares with dst.
+func andnEach(dst Bitmap, op simdBinary, other Bitmap, extra []Bitmap) {
+	if n := minint(len(dst), len(other)); n > 0 {
+		op(unsafe.Pointer(&dst[0]), unsafe.Pointer(&other[0]), uint64(n))
+	}
+	for i := range extra {
+		if n := minint(len(dst), len(extra[i])); n > 0 {
+			op(unsafe.Pointer(&dst[0]), unsafe.Pointer(&extra[i][0]), uint64(n))
+		}
+	}
+}
+
 func pointersOf(other Bitmap, extra []Bitmap) (unsafe.Pointer, int) {
 	out := make([]unsafe.Pointer, len(extra)+1)
 	out[0] = unsafe.Pointer(&other[0])
