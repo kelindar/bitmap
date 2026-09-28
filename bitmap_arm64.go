@@ -34,7 +34,7 @@ func (dst *Bitmap) And(other Bitmap, extra ...Bitmap) {
 // Operation works as set subtract: dst - b
 func (dst *Bitmap) AndNot(other Bitmap, extra ...Bitmap) {
 	max := minlen(*dst, other, extra)
-	if max == 0 {
+	if len(*dst) == 0 || (max == 0 && len(extra) == 0) {
 		return
 	}
 
@@ -44,11 +44,17 @@ func (dst *Bitmap) AndNot(other Bitmap, extra ...Bitmap) {
 		case 0:
 			_andn(unsafe.Pointer(&(*dst)[0]), unsafe.Pointer(&other[0]), uint64(max))
 		default:
-			vx, _ := pointersOf(other, extra)
-			_andn_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+			// _andn_many applies one word count to every input, so a source shorter
+			// than dst is subtracted on its own over the words it shares with dst.
+			if max == len(*dst) {
+				vx, _ := pointersOf(other, extra)
+				_andn_many(unsafe.Pointer(&(*dst)[0]), vx, dimensionsOf(max, len(extra)+1))
+			} else {
+				andnEach(*dst, _andn, other, extra)
+			}
 		}
 	default:
-		andn(*dst, max, other, extra)
+		andn(*dst, other, extra)
 		return
 	}
 }
