@@ -140,7 +140,7 @@ import "github.com/kelindar/bitmap"
 ```
 
 ```go
-var books := bitmap.Bitmap
+var books bitmap.Bitmap
 books.Set(300)      // sets 300-th bit
 books.Set(400)      // sets 400-th bit
 books.Set(600)      // sets 600-th bit (auto-resized)
