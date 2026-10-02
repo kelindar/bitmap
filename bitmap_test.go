@@ -419,6 +419,20 @@ func TestCount(t *testing.T) {
 	assert.Equal(t, 9, b.CountTo(128))
 }
 
+func TestCountWithHardware(t *testing.T) {
+	defer func(level int) { hardware = level }(hardware)
+
+	var b Bitmap
+	for i := uint32(0); i < 10000; i += 3 {
+		b.Set(i)
+	}
+
+	for _, level := range []int{isUnsupported, isAccelerated, isAVX512} {
+		hardware = level
+		assert.Equal(t, 3334, b.Count(), "hardware=%d", level)
+	}
+}
+
 func TestGrow(t *testing.T) {
 	bitmap := make(Bitmap, 1, 5)
 	bitmap[0] = 42
