@@ -84,6 +84,8 @@ func (dst *Bitmap) ReadFrom(r io.Reader) (int64, error) {
 	// If bitmap is too small, create one of the required size
 	if size := int(binary.BigEndian.Uint32(header[:4])) / 8; size > len(*dst) {
 		*dst = make(Bitmap, size)
+	} else {
+		dst.shrink(size)
 	}
 
 	// Read into the buffer
