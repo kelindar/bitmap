@@ -67,7 +67,7 @@ func (dst *Bitmap) WriteTo(w io.Writer) (int64, error) {
 	// Write the buffer into the stream
 	n2, err := w.Write(buffer)
 	if err != nil {
-		return int64(n2), err
+		return int64(n1 + n2), err
 	}
 
 	return int64(n1 + n2), err
