@@ -8,9 +8,9 @@ import (
 )
 
 /*
-cpu: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
-BenchmarkRange/range-8         	    1891	    674656 ns/op	       0 B/op	       0 allocs/op
-BenchmarkRange/filter-8        	    2222	    535359 ns/op	       0 B/op	       0 allocs/op
+cpu: AMD Ryzen AI 9 HX 370 w/ Radeon 890M
+BenchmarkRange/range-24      729           1438279 ns/op               0 B/op          0 allocs/op
+BenchmarkRange/iterate-24    4900           243927 ns/op               0 B/op          0 allocs/op
 */
 func BenchmarkRange(b *testing.B) {
 	var i uint32
@@ -18,6 +18,12 @@ func BenchmarkRange(b *testing.B) {
 		index.Range(func(x uint32) {
 			i = x
 		})
+	})
+
+	run(b, "iterate", func(index Bitmap) {
+		for x := range index.Iterate() {
+			i = x
+		}
 	})
 
 	run(b, "filter", func(index Bitmap) {
@@ -124,6 +130,17 @@ func TestRangeIndex(t *testing.T) {
 		triangular += int(x)
 		return
 	})
+	assert.Equal(t, 8128, triangular)
+}
+
+func TestIterate(t *testing.T) {
+	a := make(Bitmap, 2)
+	a.Ones()
+
+	triangular := 0
+	for x := range a.Iterate() {
+		triangular += int(x)
+	}
 	assert.Equal(t, 8128, triangular)
 }
 

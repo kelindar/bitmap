@@ -4,6 +4,7 @@
 package bitmap
 
 import (
+	"iter"
 	"unsafe"
 
 	"github.com/kelindar/simd"
@@ -11,10 +12,78 @@ import (
 
 const full = 0xffffffffffffffff
 
+// Iterate ...
+func (dst Bitmap) Iterate() iter.Seq[uint32] {
+	return func(yield func(uint32) bool) {
+		for blkAt := range dst {
+			blk := dst[blkAt]
+			if blk == 0x0 {
+				continue // Skip the empty page
+			}
+
+			// Iterate in a 4-bit chunks so we can reduce the number of function calls and skip
+			// the bits for which we should not call our range function.
+			offset := uint32(blkAt << 6)
+			for ; blk > 0; blk = blk >> 4 {
+				switch blk & 0b1111 {
+				case 0b0001:
+					yield(offset + 0)
+				case 0b0010:
+					yield(offset + 1)
+				case 0b0011:
+					yield(offset + 0)
+					yield(offset + 1)
+				case 0b0100:
+					yield(offset + 2)
+				case 0b0101:
+					yield(offset + 0)
+					yield(offset + 2)
+				case 0b0110:
+					yield(offset + 1)
+					yield(offset + 2)
+				case 0b0111:
+					yield(offset + 0)
+					yield(offset + 1)
+					yield(offset + 2)
+				case 0b1000:
+					yield(offset + 3)
+				case 0b1001:
+					yield(offset + 0)
+					yield(offset + 3)
+				case 0b1010:
+					yield(offset + 1)
+					yield(offset + 3)
+				case 0b1011:
+					yield(offset + 0)
+					yield(offset + 1)
+					yield(offset + 3)
+				case 0b1100:
+					yield(offset + 2)
+					yield(offset + 3)
+				case 0b1101:
+					yield(offset + 0)
+					yield(offset + 2)
+					yield(offset + 3)
+				case 0b1110:
+					yield(offset + 1)
+					yield(offset + 2)
+					yield(offset + 3)
+				case 0b1111:
+					yield(offset + 0)
+					yield(offset + 1)
+					yield(offset + 2)
+					yield(offset + 3)
+				}
+				offset += 4
+			}
+		}
+	}
+}
+
 // Range iterates over all of the bits set to one in this bitmap.
 func (dst Bitmap) Range(fn func(x uint32)) {
-	for blkAt := 0; blkAt < len(dst); blkAt++ {
-		blk := (dst)[blkAt]
+	for blkAt := range dst {
+		blk := dst[blkAt]
 		if blk == 0x0 {
 			continue // Skip the empty page
 		}
