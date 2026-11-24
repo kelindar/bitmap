@@ -72,7 +72,7 @@ func (dst *Bitmap) AndNot(other Bitmap, extra ...Bitmap) {
 // Or computes the union between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) Or(other Bitmap, extra ...Bitmap) {
 	max := maxlen(*dst, other, extra)
-	if max == 0 {
+	if max == 0 || (len(other) == 0 && len(extra) == 0) {
 		return
 	}
 
@@ -112,7 +112,7 @@ func (dst *Bitmap) Or(other Bitmap, extra ...Bitmap) {
 // Xor computes the symmetric difference between two bitmaps and stores the result in the current bitmap
 func (dst *Bitmap) Xor(other Bitmap, extra ...Bitmap) {
 	max := maxlen(*dst, other, extra)
-	if max == 0 {
+	if max == 0 || (len(other) == 0 && len(extra) == 0) {
 		return
 	}
 
