@@ -602,10 +602,38 @@ func TestEmptyOr(t *testing.T) {
 	assert.Equal(t, 0, a.Count())
 }
 
+func TestOrEmptyOther(t *testing.T) {
+	a := Bitmap{}
+	a.Set(3)
+	a.Set(200)
+
+	// A bitmap without any words has nothing to add, whichever way it is empty
+	a.Or(nil)
+	a.Or(Bitmap{})
+	a.Or(nil, nil)
+	assert.Equal(t, 2, a.Count())
+	assert.True(t, a.Contains(3))
+	assert.True(t, a.Contains(200))
+}
+
 func TestEmptyXor(t *testing.T) {
 	var a, b Bitmap
 	a.Xor(b)
 	assert.Equal(t, 0, a.Count())
+}
+
+func TestXorEmptyOther(t *testing.T) {
+	a := Bitmap{}
+	a.Set(3)
+	a.Set(200)
+
+	// A bitmap without any words has nothing to add, whichever way it is empty
+	a.Xor(nil)
+	a.Xor(Bitmap{})
+	a.Xor(nil, nil)
+	assert.Equal(t, 2, a.Count())
+	assert.True(t, a.Contains(3))
+	assert.True(t, a.Contains(200))
 }
 
 func TestTruthTables_NoSIMD(t *testing.T) {
